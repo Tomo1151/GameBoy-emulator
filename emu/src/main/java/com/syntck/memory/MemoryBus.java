@@ -1,4 +1,4 @@
-package emu.memory;
+package com.syntck.memory;
 
 public class MemoryBus {
   public static final int MEMORY_SIZE = 0xFFFF; // 64KB of memory

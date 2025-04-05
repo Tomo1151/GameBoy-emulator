@@ -1,4 +1,4 @@
-package emu.cpu;
+package com.syntck.cpu;
 
 public class Functions {
   public static OverflowingAddResult overflowing_add(int a, int b) {

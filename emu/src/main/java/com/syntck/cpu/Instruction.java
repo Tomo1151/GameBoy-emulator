@@ -1,4 +1,4 @@
-package emu.cpu;
+package com.syntck.cpu;
 
 public abstract class Instruction {
   public abstract InstructionName getName();

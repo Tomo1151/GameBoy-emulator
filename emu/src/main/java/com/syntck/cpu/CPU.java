@@ -1,15 +1,23 @@
-package emu.cpu;
+package com.syntck.cpu;
 
-import emu.memory.MemoryBus;
+import com.syntck.memory.MemoryBus;
 
 public class CPU {
-  private Registers registers; // CPU レジスタ
-  private MemoryBus bus; // メモリバス
-  private int pc; // プログラムカウンタ
-  private int sp; // スタックポインタ
+  public Registers registers; // CPU レジスタ
+  public MemoryBus bus; // メモリバス
+  public int pc; // プログラムカウンタ
+  public int sp; // スタックポインタ
+
+  public CPU() {
+    this.registers = new Registers();
+    this.registers.f = new FlagsRegister();
+    this.bus = new MemoryBus();
+    this.pc = 0x0000; // プログラムカウンタの初期値
+    this.sp = 0xFFFF; // スタックポインタの初期値
+  }
 
   // MARK: execute()
-  int execute(Instruction instruction) {
+  int execute(Instruction instruction) throws IllegalArgumentException {
     switch (instruction.getName()) {
       // MARK: ADD命令
       case ADD: {
@@ -55,10 +63,11 @@ public class CPU {
             break;
           case Always:
             condition = true;
+            break;
           default:
             throw new IllegalArgumentException("Invalid jump test"); 
         }
-        jump(condition);
+        return jump(condition);
       }
       // MARK: LD命令
       case LD: {
@@ -69,24 +78,31 @@ public class CPU {
         switch (source) {
           case A: {
             sourceValue = this.registers.a;
+            break;
           }
           case B: {
             sourceValue = this.registers.b;
+            break;
           }
           case C: {
             sourceValue = this.registers.c;
+            break;
           }
           case D: {
             sourceValue = this.registers.d;
+            break;
           }
           case E: {
             sourceValue = this.registers.e;
+            break;
           }
           case H: {
             sourceValue = this.registers.h;
+            break;
           }
           case L: {
             sourceValue = this.registers.l;
+            break;
           }
           case D8: {
             sourceValue = this.readNextByte();
@@ -200,6 +216,7 @@ public class CPU {
             break;
           case Always:
             condition = true;
+            break;
           default:
             throw new IllegalArgumentException("Invalid jump test"); 
         }
@@ -225,6 +242,7 @@ public class CPU {
             break;
           case Always:
             condition = true;
+            break;
           default:
             throw new IllegalArgumentException("Invalid jump test");
         }
@@ -238,7 +256,7 @@ public class CPU {
   }
 
   // MARK: step()
-  void step() {
+  public void step() {
     // プログラムカウンタから命令を取得
     int instructionByte = this.bus.readByte(this.pc);
 
