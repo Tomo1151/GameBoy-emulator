@@ -8,6 +8,14 @@ public class Functions {
     }
     return new OverflowingAddResult(result); // Return the result and whether there was an overflow
   }
+
+  public static OverflowSubtractResult overflowing_subtract(int a, int b) {
+    int result = a - b;
+    if (result < 0x00) {
+      result &= 0x00FF; // Keep only the lower 8 bits
+    }
+    return new OverflowSubtractResult(result); // Return the result and whether there was an overflow
+  }
 }
 
 class OverflowingAddResult {
@@ -20,5 +28,15 @@ class OverflowingAddResult {
   public OverflowingAddResult(int value) {
     this.value = value;
     this.overflow = value > 0xFF;
+  }
+}
+
+class OverflowSubtractResult {
+  public int value;
+  public boolean overflow;
+
+  public OverflowSubtractResult(int value) {
+    this.value = value;
+    this.overflow = value < 0x00;
   }
 }

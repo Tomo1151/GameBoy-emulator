@@ -59,7 +59,7 @@ public abstract class Instruction {
     }
   }
 
-  // ADD命令の実装
+  // ADD命令の定義
   public static final class ADD extends Instruction {
     public final InstructionName name = InstructionName.ADD;
     private final ArithmeticTarget target;
@@ -78,7 +78,7 @@ public abstract class Instruction {
     }
   };
 
-  // JP命令の実装
+  // JP命令の定義
   public static final class JP extends Instruction {
     public final InstructionName name = InstructionName.JP;
     private final JumpTest test;
@@ -97,7 +97,7 @@ public abstract class Instruction {
     }
   };
 
-  // LD命令の実装
+  // LD命令の定義
   public static final class LD extends Instruction {
     public final InstructionName name = InstructionName.LD;
     private final LoadByteTarget target;
@@ -122,12 +122,121 @@ public abstract class Instruction {
     }
   };
 
+  // PUSH命令の定義
+  public static final class PUSH extends Instruction {
+    public final InstructionName name = InstructionName.PUSH;
+    private final StackTarget target;
+
+    public PUSH(StackTarget target) {
+      this.target = target;
+    }
+
+    public StackTarget getTarget() {
+      return target;
+    }
+
+    @Override
+    public InstructionName getName() {
+      return name;
+    }
+  }
+
+  // POP命令の定義
+  public static final class POP extends Instruction {
+    public final InstructionName name = InstructionName.POP;
+    private final StackTarget target;
+
+    public POP(StackTarget target) {
+      this.target = target;
+    }
+
+    public StackTarget getTarget() {
+      return target;
+    }
+
+    @Override
+    public InstructionName getName() {
+      return name;
+    }
+  }
+
+  // CALL命令の定義
+  public static final class CALL extends Instruction {
+    public final InstructionName name = InstructionName.CALL;
+    private final JumpTest test;
+
+    public CALL(JumpTest test) {
+      this.test = test;
+    }
+
+    public JumpTest getTest() {
+      return test;
+    }
+
+    @Override
+    public InstructionName getName() {
+      return name;
+    }
+  };
+
+  // RET命令の定義
+  public static final class RET extends Instruction {
+    public final InstructionName name = InstructionName.RET;
+    private final JumpTest test;
+
+    public RET(JumpTest test) {
+      this.test = test;
+    }
+
+    public JumpTest getTest() {
+      return test;
+    }
+
+    @Override
+    public InstructionName getName() {
+      return name;
+    }
+  }
 }
 
 enum InstructionName {
   ADD,
+  ADDHL,
+  ADC,
+  SUB,
+  SBC,
+  AND,
+  OR,
+  XOR,
+  CP,
+  INC,
+  DEC,
+  CCF,
+  SCF,
+  RRA,
+  RLA,
+  RRCA,
+  RRLA,
+  CPL,
+  BIT,
+  RESET,
+  SET,
+  SRL,
+  RR,
+  RL,
+  RRC,
+  RLC,
+  SRA,
+  SLA,
+  SWAP,
   JP,
   LD,
+  PUSH,
+  POP,
+  CALL,
+  RET,
+  NOP,
+  HALT,
 }
 
 enum ArithmeticTarget {
@@ -148,4 +257,12 @@ enum JumpTest {
   NotCarry,
   Carry,
   Always,
+}
+
+enum StackTarget {
+  BC,
+  DE,
+  HL,
+  AF,
+  HLIndirect,
 }
