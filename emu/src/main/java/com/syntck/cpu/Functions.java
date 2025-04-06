@@ -2,6 +2,7 @@ package com.syntck.cpu;
 
 public class Functions {
   public static OverflowingAddResult overflowing_add(int a, int b) {
+    // FIXME: これはwrapping_addの実装, overflowing_addの実装ではない
     int result = a + b;
     if (result > 0xFF) {
       result &= 0x00FF; // Keep only the lower 8 bits
