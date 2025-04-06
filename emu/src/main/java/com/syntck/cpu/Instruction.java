@@ -40,6 +40,7 @@ public abstract class Instruction {
   public static Instruction fromByteNotPrefixed(int instructionByte) {
     // プレフィックス命令でない場合のデコード
     switch (instructionByte) {
+      // MARK: ADD命令 0x80-0x87
       case 0x80:
         return new ADD(ArithmeticTarget.B);
       case 0x81:
@@ -54,6 +55,18 @@ public abstract class Instruction {
         return new ADD(ArithmeticTarget.L);
       case 0x87:
         return new ADD(ArithmeticTarget.A);
+
+      // MARK: JP命令 0xC2, 0xC3, 0xCA, 0xD2, 0xDA
+      case 0xCA:
+        return new JP(JumpTest.Zero);
+      case 0xC2:
+        return new JP(JumpTest.NotZero);
+      case 0xD2:
+        return new JP(JumpTest.NotCarry);
+      case 0xDA:
+        return new JP(JumpTest.Carry);
+      case 0xC3:
+        return new JP(JumpTest.Always);
       default:
         return null; // Invalid instruction
     }
