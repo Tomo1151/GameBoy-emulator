@@ -31,7 +31,7 @@ public class CPU {
             int value = this.registers.c;
             int new_value = add(value);
             this.registers.a = new_value;
-            return Functions.overflowing_add(this.pc, 1).value;
+            return Functions.overflowingAdd(this.pc, 1).value;
           case D:
             return this.pc;
           case E:
@@ -154,9 +154,9 @@ public class CPU {
         }
 
         if (source == LoadByteSource.D8) {
-          return Functions.overflowing_add(this.pc, 2).value;
+          return Functions.overflowingAdd(this.pc, 2).value;
         } else {
-          return Functions.overflowing_add(this.pc, 1).value;
+          return Functions.overflowingAdd(this.pc, 1).value;
         }
       }
 
@@ -166,13 +166,13 @@ public class CPU {
         switch (target) {
           case BC:
             push(this.registers.get_bc());
-            return Functions.overflowing_add(this.pc, 1).value;
+            return Functions.overflowingAdd(this.pc, 1).value;
           case DE:
             push(this.registers.get_de());
-            return Functions.overflowing_add(this.pc, 1).value;
+            return Functions.overflowingAdd(this.pc, 1).value;
           case HL:
             push(this.registers.get_hl());
-            return Functions.overflowing_add(this.pc, 1).value;
+            return Functions.overflowingAdd(this.pc, 1).value;
           default:
             throw new IllegalArgumentException("Invalid stack target");
         }
@@ -185,13 +185,13 @@ public class CPU {
         switch (target) {
           case BC:
             this.registers.set_bc(result);
-            return Functions.overflowing_add(this.pc, 1).value;
+            return Functions.overflowingAdd(this.pc, 1).value;
           case DE:
             this.registers.set_de(result);
-            return Functions.overflowing_add(this.pc, 1).value;
+            return Functions.overflowingAdd(this.pc, 1).value;
           case HL:
             this.registers.set_hl(result);
-            return Functions.overflowing_add(this.pc, 1).value;
+            return Functions.overflowingAdd(this.pc, 1).value;
           default:
             throw new IllegalArgumentException("Invalid stack source");
         }
@@ -282,7 +282,7 @@ public class CPU {
 
   // MARK: add()
   int add(int value) {
-    OverflowingAddResult result = Functions.overflowing_add(this.registers.a, value);
+    OverflowingAddResult result = Functions.overflowingAdd(this.registers.a, value);
 
     this.registers.f.zero = result.value == 0x00;
     this.registers.f.subtract = false;
@@ -296,31 +296,31 @@ public class CPU {
     if (condition) {
       return readNextWord(); // 次のワード(2byte)を読み込む
     } else {
-      return Functions.overflowing_add(this.pc, 3).value; // 3バイト足す
+      return Functions.overflowingAdd(this.pc, 3).value; // 3バイト足す
     }
   }
 
   // MARK: push()
   void push(int value) {
-    this.sp = Functions.overflowing_subtract(this.sp, 1).value; // スタックポインタを1バイト分減らす
+    this.sp = Functions.overflowingSubtract(this.sp, 1).value; // スタックポインタを1バイト分減らす
     this.bus.writeByte(this.sp, ((value & 0xFF00) >> 8)); // スタックに上位バイトを書き込む
-    this.sp = Functions.overflowing_subtract(this.sp, 1).value; // スタックポインタを1バイト分減らす
+    this.sp = Functions.overflowingSubtract(this.sp, 1).value; // スタックポインタを1バイト分減らす
     this.bus.writeByte(this.sp, (value & 0x00FF)); // スタックに下位バイトを書き込む
   }
 
   // MARK: pop()
   int pop() {
     int lsb = this.bus.readByte(this.sp); // スタックから下位バイトを読み込む
-    this.sp = Functions.overflowing_add(this.sp, 1).value; // スタックポインタを1バイト分増やす
+    this.sp = Functions.overflowingAdd(this.sp, 1).value; // スタックポインタを1バイト分増やす
     int msb = this.bus.readByte(this.sp); // スタックから上位バイトを読み込む
-    this.sp = Functions.overflowing_add(this.sp, 1).value; // スタックポインタを1バイト分増やす
+    this.sp = Functions.overflowingAdd(this.sp, 1).value; // スタックポインタを1バイト分増やす
     return ((msb << 8) | lsb); // リトルエンディアンで結合
   }
 
 
   // MARK: call()
   int call(boolean condition) {
-    int nextPc = Functions.overflowing_add(this.pc, 3).value; // 次のPCのアドレスを計算
+    int nextPc = Functions.overflowingAdd(this.pc, 3).value; // 次のPCのアドレスを計算
     if (condition) {
       push(nextPc); // 次のPCをスタックにプッシュ
       return readNextWord(); // 次のワードを読み込む
@@ -334,7 +334,7 @@ public class CPU {
     if (condition) {
       return pop(); // スタックからポップしてPCを更新
     } else {
-      return Functions.overflowing_add(this.pc, 1).value; // PCを1バイト進める
+      return Functions.overflowingAdd(this.pc, 1).value; // PCを1バイト進める
     }
   }
 
