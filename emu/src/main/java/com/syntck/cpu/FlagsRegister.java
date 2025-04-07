@@ -26,8 +26,17 @@ public class FlagsRegister {
   }
 
   public static int convertToInt(FlagsRegister flag) {
-
     int result = 0x0000;
+    if (flag.zero) result |= (1 << ZERO_FLAG_BYTE_POSITION);
+    if (flag.subtract) result |= (1 << SUBTRACT_FLAG_BYTE_POSITION);
+    if (flag.halfCarry) result |= (1 << HALF_CARRY_FLAG_BYTE_POSITION);
+    if (flag.carry) result |= (1 << CARRY_FLAG_BYTE_POSITION);
+    return result;
+  }
+
+  // 追加: FlagsRegister を byte 値（0-255）に変換するメソッド
+  public static int convertToByte(FlagsRegister flag) {
+    int result = 0x00;
     if (flag.zero) result |= (1 << ZERO_FLAG_BYTE_POSITION);
     if (flag.subtract) result |= (1 << SUBTRACT_FLAG_BYTE_POSITION);
     if (flag.halfCarry) result |= (1 << HALF_CARRY_FLAG_BYTE_POSITION);
@@ -41,6 +50,16 @@ public class FlagsRegister {
     flag.subtract = (value & (1 << SUBTRACT_FLAG_BYTE_POSITION)) != 0x0000;
     flag.halfCarry = (value & (1 << HALF_CARRY_FLAG_BYTE_POSITION)) != 0x0000;
     flag.carry = (value & (1 << CARRY_FLAG_BYTE_POSITION)) != 0x0000;
+    return flag;
+  }
+
+  // 追加: byte 値（0-255）から FlagsRegister インスタンスを生成するメソッド
+  public static FlagsRegister fromByte(int byteValue) {
+    FlagsRegister flag = new FlagsRegister();
+    flag.zero = ((byteValue >> ZERO_FLAG_BYTE_POSITION) & 1) != 0;
+    flag.subtract = ((byteValue >> SUBTRACT_FLAG_BYTE_POSITION) & 1) != 0;
+    flag.halfCarry = ((byteValue >> HALF_CARRY_FLAG_BYTE_POSITION) & 1) != 0;
+    flag.carry = ((byteValue >> CARRY_FLAG_BYTE_POSITION) & 1) != 0;
     return flag;
   }
 
