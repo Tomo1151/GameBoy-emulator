@@ -16,12 +16,14 @@ public class CPU {
     this.sp = 0xFFFF; // スタックポインタの初期値
   }
 
-  // MARK: execute()
+  // MARK: 命令の実行
+  // 引数に与えられた命令を実行し、次のPCを返す
   int execute(Instruction instruction) throws IllegalArgumentException {
-    switch (instruction.getName()) {
+    switch (instruction.getType()) {
       // MARK: ADD命令
+      // ADD命令はレジスタAに対して演算を行う
       case ADD: {
-        ArithmeticTarget target = ((Instruction.ADD) instruction).getTarget();
+        ArithmeticTarget target = instruction.getArithmeticTarget();
         switch (target) {
           case A:
             return this.pc;
@@ -32,21 +34,14 @@ public class CPU {
             int new_value = add(value);
             this.registers.a = new_value;
             return Functions.overflowingAdd(this.pc, 1).value;
-          case D:
-            return this.pc;
-          case E:
-            return this.pc;
-          case H:
-            return this.pc;
-          case L:
-            return this.pc;
           default:
             throw new IllegalArgumentException("Invalid target");
         }
       }
       // MARK: JP命令
+      // JP命令はFlagsRegisterによってジャンプするかどうかを決定する
       case JP: {
-        JumpTest test = ((Instruction.JP) instruction).getTest();
+        JumpTest test = instruction.getJumpTest();
         boolean condition;
         switch (test) {
           case NotZero:
@@ -70,9 +65,10 @@ public class CPU {
         return jump(condition);
       }
       // MARK: LD命令
+      // LD命令はLoadByteTargetとLoadByteSourceによってデータをロードする
       case LD: {
-        LoadByteTarget target = ((Instruction.LD) instruction).getTarget();
-        LoadByteSource source = ((Instruction.LD) instruction).getSource();
+        LoadByteTarget target = instruction.getLoadByteTarget();
+        LoadByteSource source = instruction.getLoadByteSource();
         int sourceValue;
         
         switch (source) {
@@ -161,8 +157,9 @@ public class CPU {
       }
 
       // MARK: PUSH命令
+      // PUSH命令はStackTargetによってスタックにプッシュする
       case PUSH: {
-        StackTarget target = ((Instruction.PUSH) instruction).getTarget();
+        StackTarget target = instruction.getStackTarget();
         switch (target) {
           case BC:
             push(this.registers.get_bc());
@@ -179,8 +176,9 @@ public class CPU {
       }
 
       // MARK: POP命令
+      // POP命令はStackTargetによってスタックからポップする
       case POP: {
-        StackTarget target = ((Instruction.POP) instruction).getTarget();
+        StackTarget target = instruction.getStackTarget();
         int result = pop();
         switch (target) {
           case BC:
@@ -198,8 +196,9 @@ public class CPU {
       }
 
       // MARK: CALL命令
+      // CALL命令は条件によってスタックにPCをプッシュしてからジャンプする
       case CALL: {
-        JumpTest test = ((Instruction.CALL) instruction).getTest();
+        JumpTest test = instruction.getJumpTest();
         boolean condition;
         switch (test) {
           case NotZero:
@@ -224,8 +223,9 @@ public class CPU {
       }
 
       // MARK: RET命令
+      // RET命令は条件によってスタックからポップしてPCを更新する
       case RET: {
-        JumpTest test = ((Instruction.RET) instruction).getTest();
+        JumpTest test = instruction.getJumpTest();
         boolean condition;
         switch (test) {
           case NotZero:
@@ -255,7 +255,7 @@ public class CPU {
 
   }
 
-  // MARK: step()
+  // MARK: step実行
   public void step() {
     // プログラムカウンタから命令を取得
     int instructionByte = this.bus.readByte(this.pc);
@@ -268,6 +268,7 @@ public class CPU {
       instructionByte = this.bus.readByte(this.pc + 1);
     }
 
+    // 命令をデコード
     Instruction instruction = Instruction.fromByte(instructionByte, isPrefixed);
 
     if (instruction != null && instruction.isValid()) {
