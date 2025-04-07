@@ -39,6 +39,10 @@ public class Functions {
   public static int wrappingAdd(int a, int b) {
     return (a + b) & 0xFF;
   }
+
+  public static int wrappingSub(int a, int b) {
+    return (a - b) & 0xFF;
+  }
 }
 
 class OverflowingAddResult {

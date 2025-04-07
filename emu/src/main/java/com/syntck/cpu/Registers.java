@@ -39,4 +39,14 @@ public class Registers {
     this.l = value & 0x00FF;
     return get_hl();
   }
+
+  int get_af() {
+    return (this.a << 8) | FlagsRegister.convertToByte(this.f);
+  }
+
+  int set_af(int value) {
+    this.a = (value & 0xFF00) >> 8;
+    this.f = FlagsRegister.fromByte(value & 0x00FF);
+    return get_af();
+  }
 }
