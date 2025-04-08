@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.DisplayName;
 
 public class ADCTest {
+  // MARK: ADC (A, B) C
   @Test
   @DisplayName("Test ADC A, B with carry")
   public void testADCAB() throws Exception {
@@ -20,6 +21,7 @@ public class ADCTest {
     assertEquals(0x0001, cpu.pc); // PCが1増加
   }
 
+  // MARK: ADC (A, B)
   @Test
   @DisplayName("Test ADC A, B without carry")
   public void testADCABWithoutCarry() throws Exception {
@@ -33,6 +35,7 @@ public class ADCTest {
     assertEquals(0x0001, cpu.pc); // PCが1増加
   }
 
+  // MARK: ADC (A, C) C
   @Test
   @DisplayName("Test ADC A, C with carry")
   public void testADCAC() throws Exception {
@@ -46,6 +49,7 @@ public class ADCTest {
     assertEquals(0x0001, cpu.pc); // PCが1増加
   }
 
+  // MARK: ADC (A, D) C
   @Test
   @DisplayName("Test ADC A, D with carry")
   public void testADCAD() throws Exception {
@@ -59,6 +63,7 @@ public class ADCTest {
     assertEquals(0x0001, cpu.pc); // PCが1増加
   }
 
+  // MARK: ADC (A, E) C
   @Test
   @DisplayName("Test ADC A, E with carry")
   public void testADCAE() throws Exception {
@@ -72,6 +77,7 @@ public class ADCTest {
     assertEquals(0x0001, cpu.pc); // PCが1増加
   }
 
+  // MARK: ADC (A, H) C
   @Test
   @DisplayName("Test ADC A, H with carry")
   public void testADCAH() throws Exception {
@@ -85,6 +91,7 @@ public class ADCTest {
     assertEquals(0x0001, cpu.pc); // PCが1増加
   }
 
+  // MARK: ADC (A, L) C
   @Test
   @DisplayName("Test ADC A, L with carry")
   public void testADCAL() throws Exception {
@@ -98,6 +105,7 @@ public class ADCTest {
     assertEquals(0x0001, cpu.pc); // PCが1増加
   }
 
+  // MARK: ADC (A, (HL)) C
   @Test
   @DisplayName("Test ADC A, (HL) with carry")
   public void testADCAHL() throws Exception {
@@ -112,6 +120,7 @@ public class ADCTest {
     assertEquals(0x0001, cpu.pc); // PCが1増加
   }
 
+  // MARK: ADC (A, d8) C
   @Test
   @DisplayName("Test ADC A, d8 with carry")
   public void testADCAd8() throws Exception {
@@ -125,6 +134,7 @@ public class ADCTest {
     assertEquals(0x0002, cpu.pc); // PCが2増加（即値のため）
   }
 
+  // MARK: ADC (A, A) C
   @Test
   @DisplayName("Test ADC A, A with carry and overflow")
   public void testADCAAWithCarryAndOverflow() throws Exception {
@@ -141,6 +151,7 @@ public class ADCTest {
     assertEquals(0x0001, cpu.pc); // PCが1増加
   }
 
+  // MARK: ADC (A, B) HC
   @Test
   @DisplayName("Test ADC A, B with carry and half carry")
   public void testADCABWithCarryAndHalfCarry() throws Exception {
@@ -158,6 +169,7 @@ public class ADCTest {
     assertEquals(0x0001, cpu.pc); // PCが1増加
   }
 
+  // MARK: ADC (A, C) ZHC
   @Test
   @DisplayName("Test ADC A, C resulting in zero")
   public void testADCACZero() throws Exception {
@@ -175,6 +187,7 @@ public class ADCTest {
     assertEquals(0x0001, cpu.pc); // PCが1増加
   }
 
+  // MARK: ADC (A, D) ZHC
   @Test
   @DisplayName("Test ADC A, d8 with multiple flags")
   public void testADCAd8MultipleFlags() throws Exception {
