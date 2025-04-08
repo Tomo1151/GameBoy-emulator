@@ -17,4 +17,19 @@ public class MemoryBus {
     }
     memory[address] = value; // Write a byte to the specified address
   }
+
+  public void writeWord(int address, int value) {
+    if (address < 0 || address >= MEMORY_SIZE - 1) {
+      throw new IllegalArgumentException("Address out of bounds: " + String.format("0x%04X", address));
+    }
+    memory[address] = value & 0xFF; // Write the lower byte
+    memory[address + 1] = (value >> 8) & 0xFF; // Write the upper byte
+  }
+
+  public int readWord(int address) {
+    if (address < 0 || address >= MEMORY_SIZE - 1) {
+      throw new IllegalArgumentException("Address out of bounds: " + String.format("0x%04X", address));
+    }
+    return (memory[address] & 0xFF) | ((memory[address + 1] & 0xFF) << 8); // Read a word from the specified address
+  }
 }

@@ -1,18 +1,13 @@
 package com.syntck.cpu;
 
+import static com.syntck.Functions.*;
+
 import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.DisplayName;
 
 
 public class AddTest {
-  boolean compareFlagsRegister(FlagsRegister actual, boolean zero, boolean subtract, boolean halfCarry, boolean carry) {
-    return zero == actual.zero &&
-           subtract == actual.subtract &&
-           halfCarry == actual.halfCarry &&
-           carry == actual.carry;
-  }
-
   // MARK: ADD (A, A)
   @Test
   @DisplayName("Test ADD A, A instruction")

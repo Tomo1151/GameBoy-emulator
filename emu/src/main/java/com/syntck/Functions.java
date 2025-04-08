@@ -1,4 +1,6 @@
-package com.syntck.cpu;
+package com.syntck;
+
+import com.syntck.cpu.FlagsRegister;
 
 public class Functions {
   // Fix overflowingAdd to handle 16-bit values
@@ -43,27 +45,35 @@ public class Functions {
   public static int wrappingSub(int a, int b) {
     return (a - b) & 0xFF;
   }
-}
 
-class OverflowingAddResult {
-  public static final int OVERFLOW = 1;
-  public static final int NO_OVERFLOW = 0;
-
-  public int value;
-  public boolean overflow;
-
-  public OverflowingAddResult(int value, boolean overflow) {
-    this.value = value;
-    this.overflow = overflow;
+  public static boolean compareFlagsRegister(FlagsRegister actual, boolean zero, boolean subtract, boolean halfCarry, boolean carry) {
+    return zero == actual.zero &&
+           subtract == actual.subtract &&
+           halfCarry == actual.halfCarry &&
+           carry == actual.carry;
   }
-}
 
-class OverflowSubtractResult {
-  public int value;
-  public boolean overflow;
 
-  public OverflowSubtractResult(int value) {
-    this.value = value;
-    this.overflow = value < 0x00;
+  public static class OverflowingAddResult {
+    public static final int OVERFLOW = 1;
+    public static final int NO_OVERFLOW = 0;
+
+    public int value;
+    public boolean overflow;
+
+    public OverflowingAddResult(int value, boolean overflow) {
+      this.value = value;
+      this.overflow = overflow;
+    }
+  }
+
+  public static class OverflowSubtractResult {
+    public int value;
+    public boolean overflow;
+
+    public OverflowSubtractResult(int value) {
+      this.value = value;
+      this.overflow = value < 0x00;
+    }
   }
 }

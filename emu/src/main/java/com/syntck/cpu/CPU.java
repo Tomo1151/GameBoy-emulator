@@ -1,5 +1,6 @@
 package com.syntck.cpu;
 
+import static com.syntck.Functions.*;
 import com.syntck.memory.MemoryBus;
 
 public class CPU {
@@ -135,7 +136,7 @@ public class CPU {
       case INCRP: {
         RegisterPair pair = instruction.getRegisterPair();
         int value = getValueForRegisterPair(pair);
-        int result = Functions.overflowingAdd(value, 1).value;
+        int result = overflowingAdd(value, 1).value;
         setValueForRegisterPair(pair, result);
         return;
       }
@@ -143,7 +144,7 @@ public class CPU {
       case DECRP: {
         RegisterPair pair = instruction.getRegisterPair();
         int value = getValueForRegisterPair(pair);
-        int result = Functions.overflowingSubtract(value, 1).value;
+        int result = overflowingSubtract(value, 1).value;
         setValueForRegisterPair(pair, result);
         return;
       }
@@ -220,7 +221,7 @@ public class CPU {
         this.registers.f.subtract = false;
         this.registers.f.halfCarry = true;
         
-        return; // Functions.overflowingAdd(this.pc, target == RotateTarget.HL_ADDR ? 3 : 2).value;
+        return; // overflowingAdd(this.pc, target == RotateTarget.HL_ADDR ? 3 : 2).value;
       }
       
       case RES: {
@@ -232,7 +233,7 @@ public class CPU {
         value &= ~(1 << bitNumber);
         setValueForRotateTarget(target, value);
         
-        return; // Functions.overflowingAdd(this.pc, target == RotateTarget.HL_ADDR ? 3 : 2).value;
+        return; // overflowingAdd(this.pc, target == RotateTarget.HL_ADDR ? 3 : 2).value;
       }
       
       case SET: {
@@ -244,7 +245,7 @@ public class CPU {
         value |= (1 << bitNumber);
         setValueForRotateTarget(target, value);
         
-        return; // Functions.overflowingAdd(this.pc, target == RotateTarget.HL_ADDR ? 3 : 2).value;
+        return; // overflowingAdd(this.pc, target == RotateTarget.HL_ADDR ? 3 : 2).value;
       }
       
       // Add implementation for SWAP instruction
@@ -261,7 +262,7 @@ public class CPU {
         this.registers.f.carry = false;
         
         setValueForRotateTarget(target, result);
-        // return Functions.overflowingAdd(this.pc, target == RotateTarget.HL_ADDR ? 3 : 2).value;
+        // return overflowingAdd(this.pc, target == RotateTarget.HL_ADDR ? 3 : 2).value;
         return;
       }
 
@@ -278,7 +279,7 @@ public class CPU {
         this.registers.f.carry = lsb;
         
         setValueForRotateTarget(target, result);
-        // return Functions.overflowingAdd(this.pc, target == RotateTarget.HL_ADDR ? 3 : 2).value;
+        // return overflowingAdd(this.pc, target == RotateTarget.HL_ADDR ? 3 : 2).value;
         return;
       }
 
@@ -322,15 +323,13 @@ public class CPU {
         JumpTest test = instruction.getJumpTest();
         boolean condition = testJumpCondition(test);
         int pc = jump(condition);
-        this.pc = Functions.wrappingSub(pc, 3); // 共通処理としてJP命令のバイト数分進められるため，それを考慮して引く
+        this.pc = wrappingSub(pc, 3); // 共通処理としてJP命令のバイト数分進められるため，それを考慮して引く
         return;
       }
       
       case JPHL: {
-        JumpTest test = instruction.getJumpTest();
-        boolean condition = testJumpCondition(test);
-        int pc = jumpHL(condition);
-        this.pc = Functions.wrappingSub(pc, 1); // 共通処理としてJPHL命令のバイト数分進められるため，それを考慮して引く
+        int pc = jumpHL();
+        this.pc = wrappingSub(pc, 1); // 共通処理としてJPHL命令のバイト数分進められるため，それを考慮して引く
         return;
       }
       
@@ -338,7 +337,7 @@ public class CPU {
         JumpTest test = instruction.getJumpTest();
         boolean condition = testJumpCondition(test);
         int pc = jumpRelative(condition);
-        this.pc = Functions.wrappingSub(pc, 2); // 共通処理としてJR命令のバイト数分進められるため，それを考慮して引く
+        this.pc = wrappingSub(pc, 2); // 共通処理としてJR命令のバイト数分進められるため，それを考慮して引く
         return;
       }
       
@@ -348,15 +347,6 @@ public class CPU {
         LoadSource source = instruction.getLoadSource();
         int sourceValue = getValueForLoadSource(source);
         setValueForLoadTarget(target, sourceValue);
-        
-        // PCの更新
-        if (source == LoadSource.D8 || source == LoadSource.A8) {
-          return;
-        } else if (source == LoadSource.D16 || source == LoadSource.A16_ADDR || target == LoadTarget.A16_ADDR) {
-          return;
-        } else {
-          return;
-        }
       }
       
       case LDHL: {
@@ -432,7 +422,7 @@ public class CPU {
         JumpTest test = instruction.getJumpTest();
         boolean condition = testJumpCondition(test);
         int pc = call(condition);
-        this.pc = Functions.wrappingSub(pc, 3); // 共通処理としてCALL命令のバイト数分進められるため，それを考慮して引く
+        this.pc = wrappingSub(pc, 3); // 共通処理としてCALL命令のバイト数分進められるため，それを考慮して引く
 
         return;
       }
@@ -441,7 +431,7 @@ public class CPU {
         JumpTest test = instruction.getJumpTest();
         boolean condition = testJumpCondition(test);
         int pc = return_(condition); // return_メソッドは条件に基づいてPCを返す
-        this.pc = Functions.wrappingSub(pc, 1); // 共通処理としてRET命令のバイト数分進められるため，それを考慮して引く
+        this.pc = wrappingSub(pc, 1); // 共通処理としてRET命令のバイト数分進められるため，それを考慮して引く
         return;
       }
       
@@ -453,7 +443,7 @@ public class CPU {
       
       case RST: {
         Integer vector = instruction.getImmediateValue();
-        push(Functions.overflowingAdd(this.pc, 1).value);
+        push(overflowingAdd(this.pc, 1).value);
         // return vector;
         return;
       }
@@ -614,52 +604,7 @@ public class CPU {
         break;
     }
   }
-  
-  // ロードソースから値を取得
-  private int getValueForLoadSource(LoadSource source) {
-    switch (source) {
-      case A: return this.registers.a;
-      case B: return this.registers.b;
-      case C: return this.registers.c;
-      case D: return this.registers.d;
-      case E: return this.registers.e;
-      case H: return this.registers.h;
-      case L: return this.registers.l;
-      case BC: return this.registers.get_bc();
-      case DE: return this.registers.get_de();
-      case HL: return this.registers.get_hl();
-      case SP: return this.sp;
-      case BC_ADDR: return this.bus.readByte(this.registers.get_bc());
-      case DE_ADDR: return this.bus.readByte(this.registers.get_de());
-      case HL_ADDR: return this.bus.readByte(this.registers.get_hl());
-      case HLI_ADDR: {
-        int value = this.bus.readByte(this.registers.get_hl());
-        this.registers.set_hl(Functions.overflowingAdd(this.registers.get_hl(), 1).value);
-        return value;
-      }
-      case HLD_ADDR: {
-        int value = this.bus.readByte(this.registers.get_hl());
-        this.registers.set_hl(Functions.overflowingSubtract(this.registers.get_hl(), 1).value);
-        return value;
-      }
-      case A16_ADDR: {
-        int address = readNextWord();
-        return this.bus.readByte(address);
-      }
-      case FF00_A8: {
-        int offset = readNextByte();
-        return this.bus.readByte(0xFF00 + offset);
-      }
-      case FF00_C: {
-        return this.bus.readByte(0xFF00 + this.registers.c);
-      }
-      case D8: return readNextByte();
-      case D16: return readNextWord();
-      default:
-        throw new IllegalArgumentException("Invalid load source: " + source);
-    }
-  }
-  
+
   // ロードターゲットに値を設定
   private void setValueForLoadTarget(LoadTarget target, int value) {
     switch (target) {
@@ -707,15 +652,19 @@ public class CPU {
         break;
       case HLI_ADDR:
         this.bus.writeByte(this.registers.get_hl(), value);
-        this.registers.set_hl(Functions.overflowingAdd(this.registers.get_hl(), 1).value);
+        this.registers.set_hl(overflowingAdd(this.registers.get_hl(), 1).value);
         break;
       case HLD_ADDR:
         this.bus.writeByte(this.registers.get_hl(), value);
-        this.registers.set_hl(Functions.overflowingSubtract(this.registers.get_hl(), 1).value);
+        this.registers.set_hl(overflowingSubtract(this.registers.get_hl(), 1).value);
         break;
       case A16_ADDR:
         int address = readNextWord();
-        this.bus.writeByte(address, value);
+        if (target == LoadTarget.A) {
+          this.bus.writeByte(address, value & 0xFF);
+        } else {
+          this.bus.writeWord(address, value);
+        }
         break;
       case FF00_A8:
         int offset = readNextByte();
@@ -726,7 +675,55 @@ public class CPU {
         break;
     }
   }
-  
+
+  // ロードソースから値を取得
+  private int getValueForLoadSource(LoadSource source) {
+    switch (source) {
+      case A: return this.registers.a;
+      case B: return this.registers.b;
+      case C: return this.registers.c;
+      case D: return this.registers.d;
+      case E: return this.registers.e;
+      case H: return this.registers.h;
+      case L: return this.registers.l;
+      case BC: return this.registers.get_bc();
+      case DE: return this.registers.get_de();
+      case HL: return this.registers.get_hl();
+      case SP: return this.sp;
+      case BC_ADDR: return this.bus.readByte(this.registers.get_bc());
+      case DE_ADDR: return this.bus.readByte(this.registers.get_de());
+      case HL_ADDR: return this.bus.readByte(this.registers.get_hl());
+      case HLI_ADDR: {
+        // HLのアドレスを読み込んでからHLをインクリメント
+        int value = this.bus.readByte(this.registers.get_hl());
+        this.registers.set_hl(overflowingAdd(this.registers.get_hl(), 1).value);
+        return value;
+      }
+      case HLD_ADDR: {
+        // HLのアドレスを読み込んでからHLをデクリメント
+        int value = this.bus.readByte(this.registers.get_hl());
+        this.registers.set_hl(overflowingSubtract(this.registers.get_hl(), 1).value);
+        return value;
+      }
+      case A16_ADDR: {
+        int address = readNextWord();
+        return this.bus.readByte(address);
+      }
+      case FF00_A8: {
+        int offset = readNextByte();
+        return this.bus.readByte(0xFF00 + offset);
+      }
+      case FF00_C: {
+        return this.bus.readByte(0xFF00 + this.registers.c);
+      }
+      case D8: return readNextByte();
+      case D16: return readNextWord();
+      default:
+        throw new IllegalArgumentException("Invalid load source: " + source);
+    }
+  }
+
+
   // ビット位置を数値に変換
   private int getBitNumber(BitPosition bitPos) {
     switch (bitPos) {
@@ -759,11 +756,11 @@ public class CPU {
   // 算術演算後の次のPCを計算
   // private int getNextPCForArithmeticOperation(ArithmeticTarget target) {
   //   if (target == ArithmeticTarget.D8) {
-  //     return Functions.overflowingAdd(this.pc, 2).value;
+  //     return overflowingAdd(this.pc, 2).value;
   //   } else if (target == ArithmeticTarget.HL_ADDR) {
-  //     return Functions.overflowingAdd(this.pc, 1).value;
+  //     return overflowingAdd(this.pc, 1).value;
   //   } else {
-  //     return Functions.overflowingAdd(this.pc, 1).value;
+  //     return overflowingAdd(this.pc, 1).value;
   //   }
   // }
   
@@ -771,7 +768,7 @@ public class CPU {
 
   // MARK: add()
   int addA(int value) {
-    OverflowingAddResult result = Functions.overflowingAdd(this.registers.a, value);
+    OverflowingAddResult result = overflowingAdd(this.registers.a, value);
 
     this.registers.f.zero = result.value == 0x00;
     this.registers.f.subtract = false;
@@ -782,8 +779,8 @@ public class CPU {
 
   int addHL(int value) {
     int hl = this.registers.get_hl();
-    int result = Functions.overflowingAdd(hl, value).value;
-    boolean overflow = Functions.overflowingAdd(hl, value).overflow;
+    int result = overflowingAdd(hl, value).value;
+    boolean overflow = overflowingAdd(hl, value).overflow;
 
     this.registers.f.subtract = false;
     this.registers.f.halfCarry = ((hl & 0x0FFF) + (value & 0x0FFF)) > 0x0FFF;
@@ -919,17 +916,13 @@ public class CPU {
     if (condition) {
       return readNextWord(); // 次のワード(2byte)を読み込む
     } else {
-      return Functions.overflowingAdd(this.pc, 3).value; // 3バイト足す
+      return overflowingAdd(this.pc, 3).value; // 3バイト足す
     }
   }
  
   // MARK: jumpHL()
-  int jumpHL(boolean condition) {
-    if (condition) {
-      return this.registers.get_hl(); // HLレジスタの値を返す
-    } else {
-      return Functions.overflowingAdd(this.pc, 1).value; // 1バイト足す
-    }
+  int jumpHL() {
+    return this.bus.readByte(this.registers.get_hl()); // HLレジスタの値がジャンプ先アドレス
   }
   
   // MARK: jumpRelative()
@@ -938,32 +931,32 @@ public class CPU {
       int offset = readNextByte();
       // 符号付き8ビットとして扱う
       if (offset > 127) offset = offset - 256;
-      return Functions.overflowingAdd(Functions.overflowingAdd(this.pc, 2).value, offset).value;
+      return overflowingAdd(overflowingAdd(this.pc, 2).value, offset).value;
     } else {
-      return Functions.overflowingAdd(this.pc, 2).value; // 2バイト足す
+      return overflowingAdd(this.pc, 2).value; // 2バイト足す
     }
   }
 
   // MARK: push()
   void push(int value) {
-    this.sp = Functions.overflowingSubtract(this.sp, 1).value; // スタックポインタを1バイト分減らす
+    this.sp = overflowingSubtract(this.sp, 1).value; // スタックポインタを1バイト分減らす
     this.bus.writeByte(this.sp, ((value & 0xFF00) >> 8)); // スタックに上位バイトを書き込む
-    this.sp = Functions.overflowingSubtract(this.sp, 1).value; // スタックポインタを1バイト分減らす
+    this.sp = overflowingSubtract(this.sp, 1).value; // スタックポインタを1バイト分減らす
     this.bus.writeByte(this.sp, (value & 0x00FF)); // スタックに下位バイトを書き込む
   }
 
   // MARK: pop()
   int pop() {
     int lsb = this.bus.readByte(this.sp); // スタックから下位バイトを読み込む
-    this.sp = Functions.overflowingAdd(this.sp, 1).value; // スタックポインタを1バイト分増やす
+    this.sp = overflowingAdd(this.sp, 1).value; // スタックポインタを1バイト分増やす
     int msb = this.bus.readByte(this.sp); // スタックから上位バイトを読み込む
-    this.sp = Functions.overflowingAdd(this.sp, 1).value; // スタックポインタを1バイト分増やす
+    this.sp = overflowingAdd(this.sp, 1).value; // スタックポインタを1バイト分増やす
     return ((msb << 8) | lsb); // リトルエンディアンで結合
   }
 
   // MARK: call()
   int call(boolean condition) {
-    int nextPc = Functions.overflowingAdd(this.pc, 3).value; // 次のPCのアドレスを計算
+    int nextPc = overflowingAdd(this.pc, 3).value; // 次のPCのアドレスを計算
     if (condition) {
       push(nextPc); // 次のPCをスタックにプッシュ
       return readNextWord(); // 次のワードを読み込む
@@ -977,7 +970,7 @@ public class CPU {
     if (condition) {
       return pop(); // スタックからポップしてPCを更新
     } else {
-      return Functions.overflowingAdd(this.pc, 1).value; // PCを1バイト進める
+      return overflowingAdd(this.pc, 1).value; // PCを1バイト進める
     }
   }
 
