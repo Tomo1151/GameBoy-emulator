@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.DisplayName;
 
-public class LoadTest {
+public class LDTest {
 
   // LD r,r'命令のテスト
   @Test
