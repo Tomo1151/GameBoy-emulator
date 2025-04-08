@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.DisplayName;
 
 
-public class AddTest {
+public class ADDTest {
   // MARK: ADD (A, A)
   @Test
   @DisplayName("Test ADD A, A instruction")
