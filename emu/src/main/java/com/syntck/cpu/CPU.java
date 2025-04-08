@@ -1,6 +1,8 @@
 package com.syntck.cpu;
 
 import static com.syntck.Functions.*;
+
+import com.syntck.Functions.OverflowingAddResult;
 import com.syntck.memory.MemoryBus;
 
 public class CPU {
@@ -341,12 +343,19 @@ public class CPU {
         return;
       }
       
-      // MARK: ロード命令
+      // MARK: LD, LDHL
       case LD: {
         LoadTarget target = instruction.getLoadTarget();
         LoadSource source = instruction.getLoadSource();
         int sourceValue = getValueForLoadSource(source);
         setValueForLoadTarget(target, sourceValue);
+        if (target == LoadTarget.HLI_ADDR || source == LoadSource.HLI_ADDR) {
+          this.registers.set_hl(wrappingAdd(this.registers.get_hl(), 1));
+        }
+        if (target == LoadTarget.HLD_ADDR || source == LoadSource.HLD_ADDR) {
+          this.registers.set_hl(wrappingSub(this.registers.get_hl(), 1));
+        }
+        return;
       }
       
       case LDHL: {
@@ -652,11 +661,9 @@ public class CPU {
         break;
       case HLI_ADDR:
         this.bus.writeByte(this.registers.get_hl(), value);
-        this.registers.set_hl(overflowingAdd(this.registers.get_hl(), 1).value);
         break;
       case HLD_ADDR:
         this.bus.writeByte(this.registers.get_hl(), value);
-        this.registers.set_hl(overflowingSubtract(this.registers.get_hl(), 1).value);
         break;
       case A16_ADDR:
         int address = readNextWord();
@@ -693,18 +700,8 @@ public class CPU {
       case BC_ADDR: return this.bus.readByte(this.registers.get_bc());
       case DE_ADDR: return this.bus.readByte(this.registers.get_de());
       case HL_ADDR: return this.bus.readByte(this.registers.get_hl());
-      case HLI_ADDR: {
-        // HLのアドレスを読み込んでからHLをインクリメント
-        int value = this.bus.readByte(this.registers.get_hl());
-        this.registers.set_hl(overflowingAdd(this.registers.get_hl(), 1).value);
-        return value;
-      }
-      case HLD_ADDR: {
-        // HLのアドレスを読み込んでからHLをデクリメント
-        int value = this.bus.readByte(this.registers.get_hl());
-        this.registers.set_hl(overflowingSubtract(this.registers.get_hl(), 1).value);
-        return value;
-      }
+      case HLI_ADDR: return this.bus.readByte(this.registers.get_hl());
+      case HLD_ADDR: return this.bus.readByte(this.registers.get_hl());
       case A16_ADDR: {
         int address = readNextWord();
         return this.bus.readByte(address);

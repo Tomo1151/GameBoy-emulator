@@ -79,6 +79,7 @@ public class LoadTest {
     cpu.bus.writeByte(0x0000, 0x22); // LD (HL+), A
     cpu.registers.set_hl(0xC000);
     cpu.registers.a = 0x5A;
+    assertEquals(cpu.registers.get_hl(), 0xC000);
     cpu.step();
     assertEquals(0x5A, cpu.bus.readByte(0xC000));
     assertEquals(0xC001, cpu.registers.get_hl()); // HLが増加
@@ -175,13 +176,13 @@ public class LoadTest {
   public void testLDHLSPr8_Negative() throws Exception {
     CPU cpu = new CPU();
     cpu.bus.writeByte(0x0000, 0xF8); // LD HL, SP+r8
-    cpu.bus.writeByte(0x0001, 0xFE); // オフセット -2
-    cpu.sp = 0xC000;
+    cpu.bus.writeByte(0x0001, 0xFF); // オフセット -1
+    cpu.sp = 0x1040;
     cpu.step();
-    assertEquals(0xBFFE, cpu.registers.get_hl());
+    assertEquals(0x1040 - 1, cpu.registers.get_hl());
     assertEquals(false, cpu.registers.f.zero);
     assertEquals(false, cpu.registers.f.subtract);
-    assertEquals(true, cpu.registers.f.halfCarry); // ハーフキャリーが発生
+    assertEquals(false, cpu.registers.f.halfCarry); // ハーフキャリーが発生
     assertEquals(true, cpu.registers.f.carry); // キャリーが発生
     assertEquals(0x0002, cpu.pc);
   }

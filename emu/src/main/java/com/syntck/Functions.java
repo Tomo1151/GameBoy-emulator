@@ -39,14 +39,22 @@ public class Functions {
   }
 
   public static int wrappingAdd(int a, int b) {
-    return (a + b) & 0xFF;
+    // 入力値に基づいて8ビットか16ビット演算かを判断
+    boolean is16Bit = a > 0xFF || b > 0xFF;
+    return is16Bit ? (a + b) & 0xFFFF : (a + b) & 0xFF;
   }
 
   public static int wrappingSub(int a, int b) {
-    return (a - b) & 0xFF;
+    // 入力値に基づいて8ビットか16ビット演算かを判断
+    boolean is16Bit = a > 0xFF || b > 0xFF;
+    return is16Bit ? (a - b) & 0xFFFF : (a - b) & 0xFF;
   }
 
   public static boolean compareFlagsRegister(FlagsRegister actual, boolean zero, boolean subtract, boolean halfCarry, boolean carry) {
+    System.out.println("actual.zero: " + actual.zero + ", expected.zero: " + zero);
+    System.out.println("actual.subtract: " + actual.subtract + ", expected.subtract: " + subtract);
+    System.out.println("actual.halfCarry: " + actual.halfCarry + ", expected.halfCarry: " + halfCarry);
+    System.out.println("actual.carry: " + actual.carry + ", expected.carry: " + carry);
     return zero == actual.zero &&
            subtract == actual.subtract &&
            halfCarry == actual.halfCarry &&
