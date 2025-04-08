@@ -6,7 +6,7 @@ import org.junit.jupiter.api.DisplayName;
 
 public class LDTest {
 
-  // LD r,r'命令のテスト
+  // MARK: LD (A, B)
   @Test
   @DisplayName("Test LD A, B")
   public void testLDAB() throws Exception {
@@ -19,7 +19,7 @@ public class LDTest {
     assertEquals(0x0001, cpu.pc);
   }
 
-  // LD r,d8命令のテスト
+  // MARK: LD (C, d8)
   @Test
   @DisplayName("Test LD C, d8")
   public void testLDCd8() throws Exception {
@@ -32,7 +32,7 @@ public class LDTest {
     assertEquals(0x0002, cpu.pc);
   }
 
-  // LD (HL), r命令のテスト
+  // MARK: LD ((HL), D)
   @Test
   @DisplayName("Test LD (HL), D")
   public void testLDHLAddrD() throws Exception {
@@ -45,7 +45,7 @@ public class LDTest {
     assertEquals(0x0001, cpu.pc);
   }
 
-  // LD A, (BC)命令のテスト
+  // MARK: LD (A, (BC))
   @Test
   @DisplayName("Test LD A, (BC)")
   public void testLDABCAddr() throws Exception {
@@ -58,7 +58,7 @@ public class LDTest {
     assertEquals(0x0001, cpu.pc);
   }
 
-  // LD (DE), A命令のテスト
+  // MARK: LD ((DE), A)
   @Test
   @DisplayName("Test LD (DE), A")
   public void testLDDEAddrA() throws Exception {
@@ -71,7 +71,7 @@ public class LDTest {
     assertEquals(0x0001, cpu.pc);
   }
 
-  // LD (HL+), A命令のテスト
+  // MARK: LD ((HL+), A)
   @Test
   @DisplayName("Test LD (HL+), A")
   public void testLDHLPlusA() throws Exception {
@@ -86,7 +86,7 @@ public class LDTest {
     assertEquals(0x0001, cpu.pc);
   }
 
-  // LD A, (HL-)命令のテスト
+  // MARK: LD (A, (HL-))
   @Test
   @DisplayName("Test LD A, (HL-)")
   public void testLDAHLMinus() throws Exception {
@@ -100,7 +100,7 @@ public class LDTest {
     assertEquals(0x0001, cpu.pc);
   }
 
-  // LD (a16), A命令のテスト
+  // MARK: LD ((a16), A)
   @Test
   @DisplayName("Test LD (a16), A")
   public void testLDa16A() throws Exception {
@@ -114,7 +114,7 @@ public class LDTest {
     assertEquals(0x0003, cpu.pc);
   }
 
-  // LD A, (a16)命令のテスト
+  // MARK: LD (A, (a16))
   @Test
   @DisplayName("Test LD A, (a16)")
   public void testLDAa16() throws Exception {
@@ -128,7 +128,7 @@ public class LDTest {
     assertEquals(0x0003, cpu.pc);
   }
 
-  // LDH (a8), A命令のテスト
+  // MARK: LDH ((a8), A)
   @Test
   @DisplayName("Test LDH (a8), A")
   public void testLDHa8A() throws Exception {
@@ -141,7 +141,7 @@ public class LDTest {
     assertEquals(0x0002, cpu.pc);
   }
 
-  // LDH A, (C)命令のテスト
+  // MARK: LDH (A, (C))
   @Test
   @DisplayName("Test LDH A, (C)")
   public void testLDHAC() throws Exception {
@@ -154,7 +154,7 @@ public class LDTest {
     assertEquals(0x0001, cpu.pc);
   }
 
-  // LD HL, SP+r8命令のテスト
+  // MARK: LD (HL, SP+r8) +
   @Test
   @DisplayName("Test LD HL, SP+r8 positive")
   public void testLDHLSPr8_Positive() throws Exception {
@@ -171,6 +171,7 @@ public class LDTest {
     assertEquals(0x0002, cpu.pc);
   }
 
+  // MARK: LD (HL, SP+r8) -
   @Test
   @DisplayName("Test LD HL, SP+r8 negative")
   public void testLDHLSPr8_Negative() throws Exception {
