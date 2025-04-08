@@ -360,20 +360,14 @@ public class CPU {
       
       case LDHL: {
         int r8 = readNextByte();
-        if (r8 > 127) r8 = r8 - 256; // 符号付き8ビットに変換
         
         // Fix flag calculations for SP+r8
         this.registers.f.zero = false;
         this.registers.f.subtract = false;
+        this.registers.f.halfCarry = ((this.sp & 0x0F) + (r8 & 0x0F)) > 0x0F;
+        this.registers.f.carry = ((this.sp & 0xFF) + (r8 & 0xFF)) > 0xFF;
         
-        // For negative values, we need to check differently
-        if (r8 < 0) {
-          this.registers.f.halfCarry = (this.sp & 0x0F) + (r8 & 0x0F) > 0x0F;
-          this.registers.f.carry = (this.sp & 0xFF) + (r8 & 0xFF) > 0xFF;
-        } else {
-          this.registers.f.halfCarry = ((this.sp & 0x0F) + (r8 & 0x0F)) > 0x0F;
-          this.registers.f.carry = ((this.sp & 0xFF) + (r8 & 0xFF)) > 0xFF;
-        }
+        if (r8 > 127) r8 = r8 - 256; // 符号付き8ビットに変換
         
         int result = this.sp + r8;
         this.registers.set_hl(result & 0xFFFF);
@@ -800,12 +794,16 @@ public class CPU {
   }
 
   int addWithCarry(int value, int carry) {
-    int total = this.registers.a + value + carry;
-    this.registers.f.zero = (total & 0xFF) == 0;
+    // キャリーを含めて一度に計算
+    int result = this.registers.a + value + carry;
+    
+    // フラグ設定
+    this.registers.f.zero = (result & 0xFF) == 0;
     this.registers.f.subtract = false;
     this.registers.f.halfCarry = ((this.registers.a & 0x0F) + (value & 0x0F) + carry) > 0x0F;
-    this.registers.f.carry = total > 0xFF;
-    return total & 0xFF;
+    this.registers.f.carry = result > 0xFF;
+    
+    return result & 0xFF;
   }
   
   int subtract(int value) {
