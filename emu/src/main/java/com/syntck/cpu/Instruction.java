@@ -420,7 +420,7 @@ public class Instruction {
       case 0x7E: return createLD(LoadTarget.A, LoadSource.HL_ADDR);
       case 0x7F: return createLD(LoadTarget.A, LoadSource.A);
       
-      // MARK: LD LD r,d8
+      // MARK: LD r,d8
       case 0x06: return createLD(LoadTarget.B, LoadSource.D8);
       case 0x0E: return createLD(LoadTarget.C, LoadSource.D8);
       case 0x16: return createLD(LoadTarget.D, LoadSource.D8);
@@ -430,7 +430,7 @@ public class Instruction {
       case 0x36: return createLD(LoadTarget.HL_ADDR, LoadSource.D8);
       case 0x3E: return createLD(LoadTarget.A, LoadSource.D8);
       
-      // MARK: LD INC r
+      // MARK: INC r
       case 0x04: return createINC(ArithmeticTarget.B);
       case 0x0C: return createINC(ArithmeticTarget.C);
       case 0x14: return createINC(ArithmeticTarget.D);
@@ -440,7 +440,7 @@ public class Instruction {
       case 0x34: return createINC(ArithmeticTarget.HL_ADDR);
       case 0x3C: return createINC(ArithmeticTarget.A);
       
-      // MARK: LD DEC r
+      // MARK: DEC r
       case 0x05: return createDEC(ArithmeticTarget.B);
       case 0x0D: return createDEC(ArithmeticTarget.C);
       case 0x15: return createDEC(ArithmeticTarget.D);
@@ -450,19 +450,19 @@ public class Instruction {
       case 0x35: return createDEC(ArithmeticTarget.HL_ADDR);
       case 0x3D: return createDEC(ArithmeticTarget.A);
       
-      // MARK: LD INC rr
+      // MARK: INC rr
       case 0x03: return createINCRP(RegisterPair.BC);
       case 0x13: return createINCRP(RegisterPair.DE);
       case 0x23: return createINCRP(RegisterPair.HL);
       case 0x33: return createINCRP(RegisterPair.SP);
       
-      // MARK: LD DEC rr
+      // MARK: DEC rr
       case 0x0B: return createDECRP(RegisterPair.BC);
       case 0x1B: return createDECRP(RegisterPair.DE);
       case 0x2B: return createDECRP(RegisterPair.HL);
       case 0x3B: return createDECRP(RegisterPair.SP);
       
-      // MARK: LD ADD A,r
+      // MARK: ADD A,r
       case 0x80: return createADD(ArithmeticTarget.B);
       case 0x81: return createADD(ArithmeticTarget.C);
       case 0x82: return createADD(ArithmeticTarget.D);
@@ -473,7 +473,7 @@ public class Instruction {
       case 0x87: return createADD(ArithmeticTarget.A);
       case 0xC6: return createADD(ArithmeticTarget.D8);
       
-      // MARK: LD ADC A,r
+      // MARK: ADC A,r
       case 0x88: return createADC(ArithmeticTarget.B);
       case 0x89: return createADC(ArithmeticTarget.C);
       case 0x8A: return createADC(ArithmeticTarget.D);
@@ -484,7 +484,7 @@ public class Instruction {
       case 0x8F: return createADC(ArithmeticTarget.A);
       case 0xCE: return createADC(ArithmeticTarget.D8);
       
-      // MARK: LD SUB r
+      // MARK: SUB r
       case 0x90: return createSUB(ArithmeticTarget.B);
       case 0x91: return createSUB(ArithmeticTarget.C);
       case 0x92: return createSUB(ArithmeticTarget.D);
@@ -495,7 +495,7 @@ public class Instruction {
       case 0x97: return createSUB(ArithmeticTarget.A);
       case 0xD6: return createSUB(ArithmeticTarget.D8);
       
-      // MARK: LD SBC A,r
+      // MARK: SBC A,r
       case 0x98: return createSBC(ArithmeticTarget.B);
       case 0x99: return createSBC(ArithmeticTarget.C);
       case 0x9A: return createSBC(ArithmeticTarget.D);
@@ -506,7 +506,7 @@ public class Instruction {
       case 0x9F: return createSBC(ArithmeticTarget.A);
       case 0xDE: return createSBC(ArithmeticTarget.D8);
       
-      // MARK: LD AND r
+      // MARK: AND r
       case 0xA0: return createAND(ArithmeticTarget.B);
       case 0xA1: return createAND(ArithmeticTarget.C);
       case 0xA2: return createAND(ArithmeticTarget.D);
@@ -517,7 +517,7 @@ public class Instruction {
       case 0xA7: return createAND(ArithmeticTarget.A);
       case 0xE6: return createAND(ArithmeticTarget.D8);
       
-      // MARK: LD XOR r
+      // MARK: XOR r
       case 0xA8: return createXOR(ArithmeticTarget.B);
       case 0xA9: return createXOR(ArithmeticTarget.C);
       case 0xAA: return createXOR(ArithmeticTarget.D);
@@ -528,7 +528,7 @@ public class Instruction {
       case 0xAF: return createXOR(ArithmeticTarget.A);
       case 0xEE: return createXOR(ArithmeticTarget.D8);
       
-      // MARK: LD OR r
+      // MARK: OR r
       case 0xB0: return createOR(ArithmeticTarget.B);
       case 0xB1: return createOR(ArithmeticTarget.C);
       case 0xB2: return createOR(ArithmeticTarget.D);
@@ -539,7 +539,7 @@ public class Instruction {
       case 0xB7: return createOR(ArithmeticTarget.A);
       case 0xF6: return createOR(ArithmeticTarget.D8);
       
-      // MARK: LD CP r
+      // MARK: CP r
       case 0xB8: return createCP(ArithmeticTarget.B);
       case 0xB9: return createCP(ArithmeticTarget.C);
       case 0xBA: return createCP(ArithmeticTarget.D);
@@ -550,54 +550,54 @@ public class Instruction {
       case 0xBF: return createCP(ArithmeticTarget.A);
       case 0xFE: return createCP(ArithmeticTarget.D8);
       
-      // MARK: LD ADD HL,rr
+      // MARK: ADD HL,rr
       case 0x09: return createADDHL(RegisterPair.BC);
       case 0x19: return createADDHL(RegisterPair.DE);
       case 0x29: return createADDHL(RegisterPair.HL);
       case 0x39: return createADDHL(RegisterPair.SP);
       
-      // MARK: LD ADD SP,r8
+      // MARK: ADD SP,r8
       case 0xE8: return createADDSP(null); // 実際の値はCPUのexecuteで取得
       
       // LD HL,SP+r8
       case 0xF8: return createLDHL(null); // 実際の値はCPUのexecuteで取得
       case 0xF9: return createLD(LoadTarget.SP, LoadSource.HL);
       
-      // MARK: LD JP cc,a16
+      // MARK: JP cc,a16
       case 0xC3: return createJP(JumpTest.Always);
       case 0xC2: return createJP(JumpTest.NotZero);
       case 0xCA: return createJP(JumpTest.Zero);
       case 0xD2: return createJP(JumpTest.NotCarry);
       case 0xDA: return createJP(JumpTest.Carry);
       
-      // MARK: LD JP HL
+      // MARK: JP HL
       case 0xE9: return createJPHL();
       
-      // MARK: LD JR cc,r8
+      // MARK: JR cc,r8
       case 0x18: return createJR(JumpTest.Always);
       case 0x20: return createJR(JumpTest.NotZero);
       case 0x28: return createJR(JumpTest.Zero);
       case 0x30: return createJR(JumpTest.NotCarry);
       case 0x38: return createJR(JumpTest.Carry);
       
-      // MARK: LD CALL cc,a16
+      // MARK: CALL cc,a16
       case 0xCD: return createCALL(JumpTest.Always);
       case 0xC4: return createCALL(JumpTest.NotZero);
       case 0xCC: return createCALL(JumpTest.Zero);
       case 0xD4: return createCALL(JumpTest.NotCarry);
       case 0xDC: return createCALL(JumpTest.Carry);
       
-      // MARK: LD RET cc
+      // MARK: RET cc
       case 0xC9: return createRET(JumpTest.Always);
       case 0xC0: return createRET(JumpTest.NotZero);
       case 0xC8: return createRET(JumpTest.Zero);
       case 0xD0: return createRET(JumpTest.NotCarry);
       case 0xD8: return createRET(JumpTest.Carry);
       
-      // MARK: LD RETI
+      // MARK: RETI
       case 0xD9: return createRETI();
       
-      // MARK: LD RST n
+      // MARK: RST n
       case 0xC7: return createRST(0x00);
       case 0xCF: return createRST(0x08);
       case 0xD7: return createRST(0x10);
@@ -607,19 +607,19 @@ public class Instruction {
       case 0xF7: return createRST(0x30);
       case 0xFF: return createRST(0x38);
       
-      // MARK: LD PUSH rr
+      // MARK: PUSH rr
       case 0xC5: return createPUSH(StackTarget.BC);
       case 0xD5: return createPUSH(StackTarget.DE);
       case 0xE5: return createPUSH(StackTarget.HL);
       case 0xF5: return createPUSH(StackTarget.AF);
       
-      // MARK: LD POP rr
+      // MARK: POP rr
       case 0xC1: return createPOP(StackTarget.BC);
       case 0xD1: return createPOP(StackTarget.DE);
       case 0xE1: return createPOP(StackTarget.HL);
       case 0xF1: return createPOP(StackTarget.AF);
       
-      // MARK: LD その他の命令
+      // MARK: その他の命令
       case 0x07: return createRLCA();
       case 0x0F: return createRRCA();
       case 0x17: return createRLA();
