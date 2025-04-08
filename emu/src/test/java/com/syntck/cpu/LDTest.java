@@ -194,11 +194,11 @@ public class LDTest {
   public void testLDa16SP() throws Exception {
     CPU cpu = new CPU();
     cpu.bus.writeByte(0x0000, 0x08); // LD (a16), SP
-    cpu.bus.writeByte(0x0001, 0x00);
-    cpu.bus.writeByte(0x0002, 0xC0); // アドレス0xC000
+    cpu.bus.writeByte(0x0001, 0x02);
+    cpu.bus.writeByte(0x0002, 0xC0); // アドレス0xC002
     cpu.sp = 0x1234;
     cpu.step();
-    assertEquals(0x1234, cpu.bus.readWord(0xC000)); // SPの値がメモリに書き込まれる
+    assertEquals(0x1234, cpu.bus.readWord(0xC002)); // SPの値がメモリに書き込まれる
     assertEquals(0x0003, cpu.pc);
   }
 }
