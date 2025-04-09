@@ -565,55 +565,63 @@ public class CPU {
         this.pc = pc - 1; // 共通処理としてRET命令のバイト数分進められるため，それを考慮して引く
         return;
       }
-      
+
       case RETI: {
-        this.interruptMasterEnable = true;
+        // TODO 未実装
+        // this.interruptMasterEnable = true;
         // return pop();
         return;
       }
-      
+
       case RST: {
-        Integer vector = instruction.getImmediateValue();
-        push(overflowingAdd(this.pc, 1).value);
+        // TODO 未実装
+        // Integer vector = instruction.getImmediateValue();
+        // push(overflowingAdd(this.pc, 1).value);
         // return vector;
         return;
       }
-      
-      // MARK: その他の命令
+
+      // MARK: NOP
       case NOP: {
         return;
       }
-      
+
+      // MARK: HALT
       case HALT: {
         this.halted = true;
         return;
       }
-      
+
+      // MARK: STOP
       case STOP: {
-        // これは特別な処理が必要なため、実装が異なる可能性があります
+        // TODO 未実装
         return;
       }
-      
+
+      // MARK: DI, EI
       case DI: {
-        this.interruptMasterEnable = false;
+        // TODO 未実装
+        // this.interruptMasterEnable = false;
         return;
       }
-      
+
       case EI: {
-        this.interruptMasterEnable = true;
+        // TODO 未実装
+        // this.interruptMasterEnable = true;
         return;
       }
-      
+
       default:
-        // 未実装の命令
+        // TODO 未実装の命令
         throw new IllegalArgumentException("Unimplemented instruction: " + instruction.getType());
     }
   }
   
   // MARK: ヘルパー関数群
   
-  // アドレスから算術演算のターゲットの値を取得
+  // MARK: get ArithmeticTarget
   private int getValueForArithmeticTarget(ArithmeticTarget target) {
+    // アドレスから算術演算のターゲットの値を取得
     switch (target) {
       case A: return this.registers.a;
       case B: return this.registers.b;
@@ -629,8 +637,9 @@ public class CPU {
     }
   }
   
-  // 算術演算のターゲットに値を設定
+  // MARK: set ArithmeticTarget
   private void setValueForArithmeticTarget(ArithmeticTarget target, int value) {
+    // 算術演算のターゲットに値を設定
     switch (target) {
       case A:
         this.registers.a = value;
@@ -661,8 +670,9 @@ public class CPU {
     }
   }
 
-  // 回転操作ターゲットの値を取得
+  // MARK: get RotateTarget
   private int getValueForRotateTarget(RotateTarget target) {
+    // 回転操作ターゲットの値を取得
     switch (target) {
       case A: return this.registers.a;
       case B: return this.registers.b;
@@ -675,9 +685,10 @@ public class CPU {
       default: throw new IllegalArgumentException("Invalid rotate target: " + target);
     }
   }
-  
-  // 回転操作ターゲットに値を設定
+
+  // MARK: set RotateTarget
   private void setValueForRotateTarget(RotateTarget target, int value) {
+    // 回転操作ターゲットに値を設定
     switch (target) {
       case A:
         this.registers.a = value;
@@ -705,9 +716,10 @@ public class CPU {
         break;
     }
   }
-  
-  // レジスタペアの値を取得
+
+  // MARK: get 16bit RegisterPair
   private int getValueForRegisterPair(RegisterPair pair) {
+    // レジスタペアの値を取得
     switch (pair) {
       case BC: return this.registers.get_bc();
       case DE: return this.registers.get_de();
@@ -717,9 +729,10 @@ public class CPU {
         throw new IllegalArgumentException("Invalid register pair: " + pair);
     }
   }
-  
-  // レジスタペアに値を設定
+
+  // MARK: set 16bit RegisterPair
   private void setValueForRegisterPair(RegisterPair pair, int value) {
+    // レジスタペアに値を設定
     switch (pair) {
       case BC:
         this.registers.set_bc(value);
@@ -736,8 +749,9 @@ public class CPU {
     }
   }
 
-  // ロードターゲットに値を設定
+  // MARK: get LoadTarget
   private void setValueForLoadTarget(LoadTarget target, int value, boolean isByte) {
+    // ロードターゲットに値を設定
     if (isByte) {
       value &= 0xFF; // 8ビットに制限
     } else {
@@ -811,8 +825,9 @@ public class CPU {
     }
   }
 
-  // ロードソースから値を取得
+  // MARK: get LoadSource
   private int getValueForLoadSource(LoadSource source) {
+    // ロードソースから値を取得
     switch (source) {
       case A: return this.registers.a;
       case B: return this.registers.b;
@@ -849,8 +864,9 @@ public class CPU {
   }
 
 
-  // ビット位置を数値に変換
+  // MARK: get BitPosition
   private int getBitNumber(BitPosition bitPos) {
+    // ビット位置を数値に変換
     switch (bitPos) {
       case BIT0: return 0;
       case BIT1: return 1;
@@ -864,9 +880,10 @@ public class CPU {
         throw new IllegalArgumentException("Invalid bit position: " + bitPos);
     }
   }
-  
-  // ジャンプ条件のテスト
+
+  // MARK: get JumpTest
   private boolean testJumpCondition(JumpTest test) {
+    // ジャンプ条件のテスト
     switch (test) {
       case NotZero: return !this.registers.f.zero;
       case Zero: return this.registers.f.zero;
@@ -877,19 +894,7 @@ public class CPU {
         throw new IllegalArgumentException("Invalid jump test: " + test);
     }
   }
-  
-  // 算術演算後の次のPCを計算
-  // private int getNextPCForArithmeticOperation(ArithmeticTarget target) {
-  //   if (target == ArithmeticTarget.D8) {
-  //     return overflowingAdd(this.pc, 2).value;
-  //   } else if (target == ArithmeticTarget.HL_ADDR) {
-  //     return overflowingAdd(this.pc, 1).value;
-  //   } else {
-  //     return overflowingAdd(this.pc, 1).value;
-  //   }
-  // }
-  
-  // MARK: 算術演算操作
+
 
   // MARK: add()
   int addA(int value) {
