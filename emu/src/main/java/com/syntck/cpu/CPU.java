@@ -322,18 +322,18 @@ public class CPU {
         return;
       }
       
-      // MARK: ジャンプ命令
+      // MARK: JP, JPHL
       case JP: {
         JumpTest test = instruction.getJumpTest();
         boolean condition = testJumpCondition(test);
         int pc = jump(condition);
-        this.pc = wrappingSub(pc, 3); // 共通処理としてJP命令のバイト数分進められるため，それを考慮して引く
+        this.pc = wrappingSub16(pc, 3); // 共通処理としてJP命令のバイト数分進められるため，それを考慮して引く
         return;
       }
       
       case JPHL: {
-        int pc = jumpHL();
-        this.pc = wrappingSub(pc, 1); // 共通処理としてJPHL命令のバイト数分進められるため，それを考慮して引く
+        int pc = jumpHL(); //this.bus.readByte(this.registers.get_hl())
+        this.pc = wrappingSub16(pc, 1); // 共通処理としてJPHL命令のバイト数分進められるため，それを考慮して引く
         return;
       }
       
@@ -900,7 +900,7 @@ public class CPU {
     if (instruction != null && instruction.isValid()) {
       // Execute the instruction
       /*int nextPc = */execute(instruction);
-      this.pc = InstructionLengthUtil.getInstructionLength(instructionByte, isPrefixed);
+      this.pc += InstructionLengthUtil.getInstructionLength(instructionByte, isPrefixed);
       // this.pc = nextPc; // PCを更新
     } else {
       // Handle invalid instruction
