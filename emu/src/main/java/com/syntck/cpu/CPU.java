@@ -38,6 +38,7 @@ public class CPU {
     switch (instruction.getType()) {
       // MARK: ADD (A, HL, SP), ADC
       case ADD: {
+        // レジスタAに対して加算を行う命令
         ArithmeticTarget target = instruction.getArithmeticTarget();
         int value = getValueForArithmeticTarget(target);
         int newValue = addA(value);
@@ -46,21 +47,24 @@ public class CPU {
       }
 
       case ADDHL: {
+        // HLレジスタに対して加算を行う命令
         RegisterPair pair = instruction.getRegisterPair();
         int value = getValueForRegisterPair(pair);
         int result = addHL(value);
         this.registers.set_hl(result);
         return;
       }
-      
+
       case ADDSP: {
+        // スタックポインタに対して加算を行う命令
         int value = readNextByte();
         if (value > 0xFF) value = value - 0x100; // 符号付き8ビットに変換
         this.sp = addSP(value);
         return;
       }
-      
+
       case ADC: {
+        // キャリーを考慮してレジスタAに加算を行う命令
         ArithmeticTarget target = instruction.getArithmeticTarget();
         int value = getValueForArithmeticTarget(target);
         int carryValue = this.registers.f.carry ? 1 : 0;
@@ -69,67 +73,18 @@ public class CPU {
         return;
       }
 
-      // MARK: AND
-      case AND: {
-        ArithmeticTarget target = instruction.getArithmeticTarget();
-        int value = getValueForArithmeticTarget(target);
-        int newValue = and(value);
-        this.registers.a = newValue;
-        return;
-      }
-      
-      // MARK: DEC
-      case DEC: {
-        ArithmeticTarget target = instruction.getArithmeticTarget();
-        int value = getValueForArithmeticTarget(target);
-        int newValue = decrement(value);
-        setValueForArithmeticTarget(target, newValue);
-        return;
-      }
-      
-      case DECRP: {
-        RegisterPair pair = instruction.getRegisterPair();
-        int value = getValueForRegisterPair(pair);
-        int result = wrappingSub16(value, 1);
-        setValueForRegisterPair(pair, result);
-        return;
-      }
-      
-      // MARK: INC
-      case INC: {
-        ArithmeticTarget target = instruction.getArithmeticTarget();
-        int value = getValueForArithmeticTarget(target);
-        int newValue = increment(value);
-        setValueForArithmeticTarget(target, newValue);
-        return;
-      }
-
-      case INCRP: {
-        RegisterPair pair = instruction.getRegisterPair();
-        int value = getValueForRegisterPair(pair);
-        int result = overflowingAdd(value, 1).value;
-        setValueForRegisterPair(pair, result);
-        return;
-      }
-
-      // MARK: CP
-      case CP: {
-        ArithmeticTarget target = instruction.getArithmeticTarget();
-        int value = getValueForArithmeticTarget(target);
-        cp(value); // CPは結果を保存しない
-        return;
-      }
-      
       // MARK: SUB, SBC
       case SUB: {
+        // レジスタAから引き算を行う命令
         ArithmeticTarget target = instruction.getArithmeticTarget();
         int value = getValueForArithmeticTarget(target);
         int newValue = subtract(value);
         this.registers.a = newValue;
         return;
       }
-      
+
       case SBC: {
+        // キャリーを考慮してレジスタAから引き算を行う命令
         ArithmeticTarget target = instruction.getArithmeticTarget();
         int value = getValueForArithmeticTarget(target);
         int carryValue = this.registers.f.carry ? 1 : 0;
@@ -138,7 +93,66 @@ public class CPU {
         return;
       }
 
+      // MARK: INC
+      case INC: {
+        // 指定したレジスタやアドレスの値をインクリメントする命令 (8bit)
+        ArithmeticTarget target = instruction.getArithmeticTarget();
+        int value = getValueForArithmeticTarget(target);
+        int newValue = increment(value);
+        setValueForArithmeticTarget(target, newValue);
+        return;
+      }
+
+      case INCRP: {
+        // 指定したレジスタやアドレスの値をインクリメントする命令 (16bit)
+        RegisterPair pair = instruction.getRegisterPair();
+        int value = getValueForRegisterPair(pair);
+        int result = overflowingAdd(value, 1).value;
+        setValueForRegisterPair(pair, result);
+        return;
+      }
+
+      // MARK: DEC
+      case DEC: {
+        // 指定したレジスタやアドレスの値をデクリメントする命令 (8bit)
+        ArithmeticTarget target = instruction.getArithmeticTarget();
+        int value = getValueForArithmeticTarget(target);
+        int newValue = decrement(value);
+        setValueForArithmeticTarget(target, newValue);
+        return;
+      }
+
+      case DECRP: {
+        // 指定したレジスタやアドレスの値をデクリメントする命令 (16bit)
+        RegisterPair pair = instruction.getRegisterPair();
+        int value = getValueForRegisterPair(pair);
+        int result = wrappingSub16(value, 1);
+        setValueForRegisterPair(pair, result);
+        return;
+      }
+
+      // MARK: CP
+      case CP: {
+        // 指定したレジスタやアドレスの値をレジスタAと比較する命令
+        ArithmeticTarget target = instruction.getArithmeticTarget();
+        int value = getValueForArithmeticTarget(target);
+        cp(value); // CPは結果を保存しない
+        return;
+      }
+      
+      // MARK: AND
+      case AND: {
+        // 指定したレジスタやアドレスの値とレジスタAの論理積を取る命令
+        ArithmeticTarget target = instruction.getArithmeticTarget();
+        int value = getValueForArithmeticTarget(target);
+        int newValue = and(value);
+        this.registers.a = newValue;
+        return;
+      }
+      
+      // MARK: OR
       case OR: {
+        // 指定したレジスタやアドレスの値とレジスタAの論理和を取る命令
         ArithmeticTarget target = instruction.getArithmeticTarget();
         int value = getValueForArithmeticTarget(target);
         int newValue = or(value);
@@ -146,15 +160,15 @@ public class CPU {
         return;
       }
       
+      // MARK: XOR
       case XOR: {
+        // 指定したレジスタやアドレスの値とレジスタAの排他的論理和を取る命令
         ArithmeticTarget target = instruction.getArithmeticTarget();
         int value = getValueForArithmeticTarget(target);
         int newValue = xor(value);
         this.registers.a = newValue;
         return;
       }
-      
-      // MARK: 16ビット算術演算命令
       
       // MARK: フラグ操作命令
       case CCF: {
@@ -206,7 +220,7 @@ public class CPU {
         this.registers.f.halfCarry = false;
         return;
       }
-      
+
       case RLCA: {
         this.registers.f.carry = (this.registers.a & 0x80) == 0x80;
         this.registers.a = ((this.registers.a << 1) | (this.registers.f.carry ? 0x01 : 0x00)) & 0xFF;
@@ -215,61 +229,59 @@ public class CPU {
         this.registers.f.halfCarry = false;
         return;
       }
-      
-      // MARK: ビット操作命令 (CBプレフィックス命令)
+
+      // MARK: BIT [prefixed]
       case BIT: {
+        // 指定されたレジスタ(operand1)の指定されたビット(operand1)が0かどうかをテストする命令
         BitPosition bitPos = instruction.getBitPosition();
         RotateTarget target = instruction.getRotateTarget();
         int value = getValueForRotateTarget(target);
         int bitNumber = getBitNumber(bitPos);
         boolean bitValue = (value & (1 << bitNumber)) != 0;
-        
         this.registers.f.zero = !bitValue;
         this.registers.f.subtract = false;
         this.registers.f.halfCarry = true;
-        
-        return; // overflowingAdd(this.pc, target == RotateTarget.HL_ADDR ? 3 : 2).value;
+        return;
       }
-      
+
+      // MARK: RES [prefixed]
       case RES: {
+        // 指定されたレジスタ(operand1)の指定されたビット(operand1)を0にする命令
         BitPosition bitPos = instruction.getBitPosition();
         RotateTarget target = instruction.getRotateTarget();
         int value = getValueForRotateTarget(target);
         int bitNumber = getBitNumber(bitPos);
-        
         value &= ~(1 << bitNumber);
         setValueForRotateTarget(target, value);
-        
-        return; // overflowingAdd(this.pc, target == RotateTarget.HL_ADDR ? 3 : 2).value;
+        return;
       }
-      
+
+      // MARK: SET [prefixed]
       case SET: {
+        // 指定されたレジスタ(operand1)の指定されたビット(operand1)を1にする命令
         BitPosition bitPos = instruction.getBitPosition();
         RotateTarget target = instruction.getRotateTarget();
         int value = getValueForRotateTarget(target);
         int bitNumber = getBitNumber(bitPos);
-        
+
         value |= (1 << bitNumber);
         setValueForRotateTarget(target, value);
-        
-        return; // overflowingAdd(this.pc, target == RotateTarget.HL_ADDR ? 3 : 2).value;
+        return;
       }
-      
-      // Add implementation for SWAP instruction
+
+      // MARK: SWAP [prefixed]
       case SWAP: {
         RotateTarget target = instruction.getRotateTarget();
+        System.out.println("SWAP " + target);
         int value = getValueForRotateTarget(target);
         int high = (value & 0xF0) >> 4;
         int low = (value & 0x0F);
         int result = (low << 4) | high;
-        
         this.registers.f.zero = result == 0;
         this.registers.f.subtract = false;
         this.registers.f.halfCarry = false;
         this.registers.f.carry = false;
-        
         setValueForRotateTarget(target, result);
-        // return overflowingAdd(this.pc, target == RotateTarget.HL_ADDR ? 3 : 2).value;
         return;
       }
 

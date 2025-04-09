@@ -40,12 +40,13 @@ public class Instruction {
     return (StackTarget)operand0;
   }
   
+  // SWAP系とBIT系でターゲット位置を同じにするためにoperand0/1を反転して受け取る
   public BitPosition getBitPosition() {
-    return (BitPosition)operand0;
+    return (BitPosition)operand1;
   }
 
   public RotateTarget getRotateTarget() {
-    return (RotateTarget)operand1;
+    return (RotateTarget)operand0;
   }
 
   public Integer getImmediateValue() {
@@ -152,15 +153,15 @@ public class Instruction {
 
   // ビット操作命令 (CBプレフィックス命令)
   public static Instruction createBIT(BitPosition bit, RotateTarget target) {
-    return new Instruction(InstructionType.BIT, bit, target);
+    return new Instruction(InstructionType.BIT, target, bit);
   }
 
   public static Instruction createRES(BitPosition bit, RotateTarget target) {
-    return new Instruction(InstructionType.RES, bit, target);
+    return new Instruction(InstructionType.RES, target, bit);
   }
 
   public static Instruction createSET(BitPosition bit, RotateTarget target) {
-    return new Instruction(InstructionType.SET, bit, target);
+    return new Instruction(InstructionType.SET, target, bit);
   }
 
   public static Instruction createSRL(RotateTarget target) {
@@ -303,7 +304,7 @@ public class Instruction {
         return createSET(bit, target);
     }
     
-    return null; // Invalid instruction
+    throw new IllegalArgumentException("Invalid instruction byte: " + instructionByte);
   }
 
   // MARK: 通常命令
