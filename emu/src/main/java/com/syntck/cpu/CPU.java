@@ -36,7 +36,7 @@ public class CPU {
   // 引数に与えられた命令を実行し、次のPCを返す
   void execute(Instruction instruction) throws IllegalArgumentException {
     switch (instruction.getType()) {
-      // MARK: ADD (A, HL, SP)
+      // MARK: ADD (A, HL, SP), ADC
       case ADD: {
         ArithmeticTarget target = instruction.getArithmeticTarget();
         int value = getValueForArithmeticTarget(target);
@@ -120,6 +120,7 @@ public class CPU {
         return;
       }
       
+      // MARK: SUB, SBC
       case SUB: {
         ArithmeticTarget target = instruction.getArithmeticTarget();
         int value = getValueForArithmeticTarget(target);
@@ -816,6 +817,7 @@ public class CPU {
     return result & 0xFF;
   }
   
+  // MARK: subtract()
   int subtract(int value) {
     this.registers.f.zero = this.registers.a == value;
     this.registers.f.subtract = true;
@@ -833,6 +835,7 @@ public class CPU {
     return total & 0xFF;
   }
   
+  // MARK: bitwise operations
   int and(int value) {
     int result = this.registers.a & value;
     this.registers.f.zero = result == 0;
@@ -860,6 +863,7 @@ public class CPU {
     return result;
   }
   
+  // MARK: cp()
   void cp(int value) {
     this.registers.f.zero = this.registers.a == value;
     this.registers.f.subtract = true;
@@ -867,6 +871,7 @@ public class CPU {
     this.registers.f.carry = this.registers.a < value;
   }
   
+  // MARK: increment/decrement
   int increment(int value) {
     int result = (value + 1) & 0xFF;
     this.registers.f.zero = result == 0;
