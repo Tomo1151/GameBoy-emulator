@@ -331,6 +331,35 @@ public class CPU {
         return;
       }
 
+      case RR: {
+        RotateTarget target = instruction.getRotateTarget();
+        int value = getValueForRotateTarget(target);
+        boolean nextCflag = (value & 0x01) != 0;
+        value = (value >> 1) & 0xFF;
+        if (this.registers.f.carry) {
+          value |= 0x80; // キャリーがセットされている場合、MSBを1にする
+        }
+        this.registers.f.zero = value == 0;
+        this.registers.f.subtract = false;
+        this.registers.f.halfCarry = false;
+        this.registers.f.carry = nextCflag;
+        setValueForRotateTarget(target, value);
+        return;
+      }
+
+      case RRC: {
+        RotateTarget target = instruction.getRotateTarget();
+        int value = getValueForRotateTarget(target);
+        boolean lsb = (value & 0x01) != 0;
+        int result = ((value >> 1) | (lsb ? 0x80 : 0)) & 0xFF;
+        this.registers.f.zero = result == 0;
+        this.registers.f.subtract = false;
+        this.registers.f.halfCarry = false;
+        this.registers.f.carry = lsb;
+        setValueForRotateTarget(target, result);
+        return;
+      }
+
       // Add implementation for SRL instruction
       case SRL: {
         RotateTarget target = instruction.getRotateTarget();
