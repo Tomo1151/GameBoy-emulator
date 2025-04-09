@@ -68,6 +68,32 @@ public class CPU {
         this.registers.a = newValue;
         return;
       }
+
+      // MARK: AND
+      case AND: {
+        ArithmeticTarget target = instruction.getArithmeticTarget();
+        int value = getValueForArithmeticTarget(target);
+        int newValue = and(value);
+        this.registers.a = newValue;
+        return;
+      }
+      
+      // MARK: DEC
+      case DEC: {
+        ArithmeticTarget target = instruction.getArithmeticTarget();
+        int value = getValueForArithmeticTarget(target);
+        int newValue = decrement(value);
+        setValueForArithmeticTarget(target, newValue);
+        return;
+      }
+      
+      case DECRP: {
+        RegisterPair pair = instruction.getRegisterPair();
+        int value = getValueForRegisterPair(pair);
+        int result = wrappingSub16(value, 1);
+        setValueForRegisterPair(pair, result);
+        return;
+      }
       
       case SUB: {
         ArithmeticTarget target = instruction.getArithmeticTarget();
@@ -86,14 +112,6 @@ public class CPU {
         return;
       }
 
-      case AND: {
-        ArithmeticTarget target = instruction.getArithmeticTarget();
-        int value = getValueForArithmeticTarget(target);
-        int newValue = and(value);
-        this.registers.a = newValue;
-        return;
-      }
-      
       case OR: {
         ArithmeticTarget target = instruction.getArithmeticTarget();
         int value = getValueForArithmeticTarget(target);
@@ -125,28 +143,12 @@ public class CPU {
         return;
       }
       
-      case DEC: {
-        ArithmeticTarget target = instruction.getArithmeticTarget();
-        int value = getValueForArithmeticTarget(target);
-        int newValue = decrement(value);
-        setValueForArithmeticTarget(target, newValue);
-        return;
-      }
-      
       // MARK: 16ビット算術演算命令
 
       case INCRP: {
         RegisterPair pair = instruction.getRegisterPair();
         int value = getValueForRegisterPair(pair);
         int result = overflowingAdd(value, 1).value;
-        setValueForRegisterPair(pair, result);
-        return;
-      }
-      
-      case DECRP: {
-        RegisterPair pair = instruction.getRegisterPair();
-        int value = getValueForRegisterPair(pair);
-        int result = overflowingSubtract(value, 1).value;
         setValueForRegisterPair(pair, result);
         return;
       }
@@ -866,7 +868,7 @@ public class CPU {
   }
   
   int decrement(int value) {
-    int result = (value - 1) & 0xFF;
+    int result = wrappingSub(value, 1) & 0xFF;
     this.registers.f.zero = result == 0;
     this.registers.f.subtract = true;
     this.registers.f.halfCarry = (value & 0x0F) == 0x00;
@@ -934,9 +936,9 @@ public class CPU {
 
   // MARK: push()
   void push(int value) {
-    this.sp = overflowingSubtract(this.sp, 1).value; // スタックポインタを1バイト分減らす
+    this.sp = wrappingSub16(this.sp, 1); // スタックポインタを1バイト分減らす
     this.bus.writeByte(this.sp, ((value & 0xFF00) >> 8)); // スタックに上位バイトを書き込む
-    this.sp = overflowingSubtract(this.sp, 1).value; // スタックポインタを1バイト分減らす
+    this.sp = wrappingSub16(this.sp, 1); // スタックポインタを1バイト分減らす
     this.bus.writeByte(this.sp, (value & 0x00FF)); // スタックに下位バイトを書き込む
   }
 
