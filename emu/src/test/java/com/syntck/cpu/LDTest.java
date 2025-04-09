@@ -109,8 +109,12 @@ public class LDTest {
     cpu.bus.writeByte(0x0001, 0x00);
     cpu.bus.writeByte(0x0002, 0xC0); // アドレス0xC000
     cpu.registers.a = 0x5A;
+    cpu.bus.writeByte(0xC001, 0x02); // 0xC001の値を確認
+    cpu.bus.writeByte(0xC002, 0x03); // 0xC001の値を確認
     cpu.step();
     assertEquals(0x5A, cpu.bus.readByte(0xC000));
+    assertEquals(0x03, cpu.bus.readByte(0xC002)); // 0xC002の値は変化しない
+    assertEquals(0x02, cpu.bus.readByte(0xC001)); // 0xC001の値は変化しない
     assertEquals(0x0003, cpu.pc);
   }
 
@@ -123,8 +127,9 @@ public class LDTest {
     cpu.bus.writeByte(0x0001, 0x00);
     cpu.bus.writeByte(0x0002, 0xC0); // アドレス0xC000
     cpu.bus.writeByte(0xC000, 0x42);
+    cpu.bus.writeByte(0xC001, 02);
     cpu.step();
-    assertEquals(0x42, cpu.registers.a);
+    assertEquals(0x42, cpu.registers.a); // 0xC001の値は影響しないはず
     assertEquals(0x0003, cpu.pc);
   }
 

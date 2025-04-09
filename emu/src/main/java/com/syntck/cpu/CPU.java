@@ -350,7 +350,7 @@ public class CPU {
         LoadTarget target = instruction.getLoadTarget();
         LoadSource source = instruction.getLoadSource();
         int sourceValue = getValueForLoadSource(source);
-        setValueForLoadTarget(target, sourceValue);
+        setValueForLoadTarget(target, sourceValue, source == LoadSource.A);
         if (target == LoadTarget.HLI_ADDR || source == LoadSource.HLI_ADDR) {
           this.registers.set_hl(wrappingAdd(this.registers.get_hl(), 1));
         }
@@ -611,7 +611,13 @@ public class CPU {
   }
 
   // ロードターゲットに値を設定
-  private void setValueForLoadTarget(LoadTarget target, int value) {
+  private void setValueForLoadTarget(LoadTarget target, int value, boolean isByte) {
+    if (isByte) {
+      value &= 0xFF; // 8ビットに制限
+    } else {
+      value &= 0xFFFF; // 16ビットに制限
+    }
+
     switch (target) {
       case A:
         this.registers.a = value & 0xFF;
@@ -663,7 +669,7 @@ public class CPU {
         break;
       case A16_ADDR:
         int address = readNextWord();
-        if (target == LoadTarget.A) {
+        if (isByte) {
           this.bus.writeByte(address, value & 0xFF);
         } else {
           this.bus.writeWord(address, value);
