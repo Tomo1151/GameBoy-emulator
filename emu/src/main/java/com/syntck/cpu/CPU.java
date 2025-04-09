@@ -169,9 +169,10 @@ public class CPU {
         this.registers.a = newValue;
         return;
       }
-      
-      // MARK: フラグ操作命令
+
+      // MARK: CCF, SCF, CPL
       case CCF: {
+        // Cフラグを反転させる命令
         this.registers.f.carry = !this.registers.f.carry;
         this.registers.f.subtract = false;
         this.registers.f.halfCarry = false;
@@ -179,6 +180,7 @@ public class CPU {
       }
       
       case SCF: {
+        // Cフラグをセットする命令
         this.registers.f.carry = true;
         this.registers.f.subtract = false;
         this.registers.f.halfCarry = false;
@@ -186,6 +188,7 @@ public class CPU {
       }
       
       case CPL: {
+        // レジスタAの値を反転させる命令
         this.registers.a = (~this.registers.a) & 0xFF;
         this.registers.f.subtract = true;
         this.registers.f.halfCarry = true;
