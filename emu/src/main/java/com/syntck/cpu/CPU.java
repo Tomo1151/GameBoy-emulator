@@ -360,20 +360,43 @@ public class CPU {
         return;
       }
 
-      // Add implementation for SRL instruction
+      // MARK: SLA, SRA, SRL [prefixed]
+      case SLA: {
+        RotateTarget target = instruction.getRotateTarget();
+        int value = getValueForRotateTarget(target);
+        boolean msb = (value & 0x80) != 0;
+        int result = (value << 1) & 0xFF;
+        this.registers.f.zero = result == 0;
+        this.registers.f.subtract = false;
+        this.registers.f.halfCarry = false;
+        this.registers.f.carry = msb;
+        setValueForRotateTarget(target, result);
+        return;
+      }
+      case SRA: {
+        RotateTarget target = instruction.getRotateTarget();
+        int value = getValueForRotateTarget(target);
+        boolean msb = (value & 0x80) != 0;
+        boolean lsb = (value & 0x01) != 0;
+        int result = (value >> 1) & 0xFF;
+        result |= msb ? 0x80 : 0;
+        this.registers.f.zero = result == 0;
+        this.registers.f.subtract = false;
+        this.registers.f.halfCarry = false;
+        this.registers.f.carry = lsb;
+        setValueForRotateTarget(target, result);
+        return;
+      }
       case SRL: {
         RotateTarget target = instruction.getRotateTarget();
         int value = getValueForRotateTarget(target);
         boolean lsb = (value & 0x01) != 0;
         int result = (value >> 1) & 0xFF;
-        
         this.registers.f.zero = result == 0;
         this.registers.f.subtract = false;
         this.registers.f.halfCarry = false;
         this.registers.f.carry = lsb;
-        
         setValueForRotateTarget(target, result);
-        // return overflowingAdd(this.pc, target == RotateTarget.HL_ADDR ? 3 : 2).value;
         return;
       }
 
