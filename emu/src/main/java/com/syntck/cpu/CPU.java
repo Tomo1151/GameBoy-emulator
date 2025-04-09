@@ -233,6 +233,7 @@ public class CPU {
 
       // MARK: SWAP [prefixed]
       case SWAP: {
+        // 指定されたレジスタ(operand1)の上位4ビットと下位4ビットを入れ替える命令
         RotateTarget target = instruction.getRotateTarget();
         int value = getValueForRotateTarget(target);
         int high = (value & 0xF0) >> 4;
@@ -248,6 +249,7 @@ public class CPU {
 
       // MARK: RLA, RRA, RLCA, RRCA
       case RLA: {
+        // レジスタAを左に回転させる命令 (元のCフラグが回転後の1ビット目に入る)
         RotateTarget target = RotateTarget.A;
         int value = getValueForRotateTarget(target);
         boolean currentCflag = this.registers.f.carry;
@@ -262,6 +264,7 @@ public class CPU {
       }
 
       case RLCA: {
+        // レジスタAを左に回転させる命令 (Cフラグ関係なくAを回転してCフラグを判定)
         RotateTarget target = RotateTarget.A;
         int value = getValueForRotateTarget(target);
         boolean msb = (value & 0x80) != 0;
@@ -275,6 +278,7 @@ public class CPU {
       }
 
       case RRA: {
+        // レジスタAを右に回転させる命令 (元のCフラグが回転後の8ビット目に入る)
         RotateTarget target = RotateTarget.A;
         int value = getValueForRotateTarget(target);
         value = (this.registers.a >> 1) & 0xFF;
@@ -290,6 +294,7 @@ public class CPU {
       }
 
       case RRCA: {
+        // レジスタAを右に回転させる命令 (Cフラグ関係なくAを回転してCフラグを判定)
         RotateTarget target = RotateTarget.A;
         int value = getValueForRotateTarget(target);
         boolean lsb = (value & 0x01) != 0;
@@ -304,6 +309,7 @@ public class CPU {
 
       // MARK: RL, RLC, RR, RRC [prefixed]
       case RL: {
+        // 指定されたレジスタ(operand1)を左に回転させる命令 (元のCフラグが回転後の1ビット目に入る)
         RotateTarget target = instruction.getRotateTarget();
         int value = getValueForRotateTarget(target);
         boolean currentCflag = this.registers.f.carry;
@@ -318,6 +324,7 @@ public class CPU {
       }
 
       case RLC: {
+        // 指定されたレジスタ(operand1)を左に回転させる命令 (Cフラグ関係なくAを回転してCフラグを判定)
         RotateTarget target = instruction.getRotateTarget();
         int value = getValueForRotateTarget(target);
         boolean msb = (value & 0x80) != 0;
@@ -331,6 +338,7 @@ public class CPU {
       }
 
       case RR: {
+        // 指定されたレジスタ(operand1)を右に回転させる命令 (元のCフラグが回転後の8ビット目に入る)
         RotateTarget target = instruction.getRotateTarget();
         int value = getValueForRotateTarget(target);
         boolean nextCflag = (value & 0x01) != 0;
@@ -347,6 +355,7 @@ public class CPU {
       }
 
       case RRC: {
+        // 指定されたレジスタ(operand1)を右に回転させる命令 (Cフラグ関係なくAを回転してCフラグを判定)
         RotateTarget target = instruction.getRotateTarget();
         int value = getValueForRotateTarget(target);
         boolean lsb = (value & 0x01) != 0;
@@ -361,6 +370,7 @@ public class CPU {
 
       // MARK: SLA, SRA, SRL [prefixed]
       case SLA: {
+        // 指定されたレジスタ(operand1)を左に論理シフトする命令
         RotateTarget target = instruction.getRotateTarget();
         int value = getValueForRotateTarget(target);
         boolean msb = (value & 0x80) != 0;
@@ -372,7 +382,9 @@ public class CPU {
         setValueForRotateTarget(target, result);
         return;
       }
+
       case SRA: {
+        // 指定されたレジスタ(operand1)を右に算術シフトする命令 (負の値にも対応する)
         RotateTarget target = instruction.getRotateTarget();
         int value = getValueForRotateTarget(target);
         boolean msb = (value & 0x80) != 0;
@@ -386,7 +398,9 @@ public class CPU {
         setValueForRotateTarget(target, result);
         return;
       }
+
       case SRL: {
+        // 指定されたレジスタ(operand1)を右に論理シフトする命令 (符号ビットは考慮しない)
         RotateTarget target = instruction.getRotateTarget();
         int value = getValueForRotateTarget(target);
         boolean lsb = (value & 0x01) != 0;
