@@ -95,6 +95,31 @@ public class CPU {
         return;
       }
       
+      // MARK: INC
+      case INC: {
+        ArithmeticTarget target = instruction.getArithmeticTarget();
+        int value = getValueForArithmeticTarget(target);
+        int newValue = increment(value);
+        setValueForArithmeticTarget(target, newValue);
+        return;
+      }
+
+      case INCRP: {
+        RegisterPair pair = instruction.getRegisterPair();
+        int value = getValueForRegisterPair(pair);
+        int result = overflowingAdd(value, 1).value;
+        setValueForRegisterPair(pair, result);
+        return;
+      }
+
+      // MARK: CP
+      case CP: {
+        ArithmeticTarget target = instruction.getArithmeticTarget();
+        int value = getValueForArithmeticTarget(target);
+        cp(value); // CPは結果を保存しない
+        return;
+      }
+      
       case SUB: {
         ArithmeticTarget target = instruction.getArithmeticTarget();
         int value = getValueForArithmeticTarget(target);
@@ -128,30 +153,7 @@ public class CPU {
         return;
       }
       
-      case CP: {
-        ArithmeticTarget target = instruction.getArithmeticTarget();
-        int value = getValueForArithmeticTarget(target);
-        cp(value); // CPは結果を保存しない
-        return;
-      }
-      
-      case INC: {
-        ArithmeticTarget target = instruction.getArithmeticTarget();
-        int value = getValueForArithmeticTarget(target);
-        int newValue = increment(value);
-        setValueForArithmeticTarget(target, newValue);
-        return;
-      }
-      
       // MARK: 16ビット算術演算命令
-
-      case INCRP: {
-        RegisterPair pair = instruction.getRegisterPair();
-        int value = getValueForRegisterPair(pair);
-        int result = overflowingAdd(value, 1).value;
-        setValueForRegisterPair(pair, result);
-        return;
-      }
       
       // MARK: フラグ操作命令
       case CCF: {
@@ -842,7 +844,7 @@ public class CPU {
   
   int or(int value) {
     int result = this.registers.a | value;
-    this.registers.f.zero = result == 0;
+    this.registers.f.zero = (result & 0xFF) == 0x00;
     this.registers.f.subtract = false;
     this.registers.f.halfCarry = false;
     this.registers.f.carry = false;
@@ -851,7 +853,7 @@ public class CPU {
   
   int xor(int value) {
     int result = this.registers.a ^ value;
-    this.registers.f.zero = result == 0;
+    this.registers.f.zero = (result & 0xFF) == 0x00;
     this.registers.f.subtract = false;
     this.registers.f.halfCarry = false;
     this.registers.f.carry = false;
