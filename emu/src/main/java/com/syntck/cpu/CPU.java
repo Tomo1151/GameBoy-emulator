@@ -234,7 +234,6 @@ public class CPU {
       // MARK: SWAP [prefixed]
       case SWAP: {
         RotateTarget target = instruction.getRotateTarget();
-        System.out.println("SWAP " + target);
         int value = getValueForRotateTarget(target);
         int high = (value & 0xF0) >> 4;
         int low = (value & 0x0F);
@@ -406,7 +405,7 @@ public class CPU {
         boolean carry = this.registers.f.carry;
         boolean halfCarry = this.registers.f.halfCarry;
         boolean subtract = this.registers.f.subtract;
-        
+
         if (!subtract) {
           // after an addition, adjust if (half-)carry occurred or if result is out of bounds
           if (carry || a > 0x99) {
@@ -425,39 +424,39 @@ public class CPU {
             a = (a - 0x06) & 0xFF;
           }
         }
-        
+
         this.registers.a = a;
         this.registers.f.zero = a == 0;
         // subtract flag remains unchanged
         this.registers.f.halfCarry = false;
         this.registers.f.carry = carry;
-        
+
         return;
       }
-      
-      // MARK: JP, JPHL
+
+      // MARK: JP, JPHL, JR
       case JP: {
         JumpTest test = instruction.getJumpTest();
         boolean condition = testJumpCondition(test);
         int pc = jump(condition);
-        this.pc = wrappingSub16(pc, 3); // 共通処理としてJP命令のバイト数分進められるため，それを考慮して引く
+        this.pc = pc - 3; // 共通処理としてJP命令のバイト数分進められるため，それを考慮して引く
         return;
       }
-      
+
       case JPHL: {
         int pc = jumpHL(); //this.bus.readByte(this.registers.get_hl())
-        this.pc = wrappingSub16(pc, 1); // 共通処理としてJPHL命令のバイト数分進められるため，それを考慮して引く
+        this.pc = pc - 1; // 共通処理としてJPHL命令のバイト数分進められるため，それを考慮して引く
         return;
       }
-      
+
       case JR: {
         JumpTest test = instruction.getJumpTest();
         boolean condition = testJumpCondition(test);
         int pc = jumpRelative(condition);
-        this.pc = wrappingSub(pc, 2); // 共通処理としてJR命令のバイト数分進められるため，それを考慮して引く
+        this.pc = pc - 2; // 共通処理としてJR命令のバイト数分進められるため，それを考慮して引く, 一時的にマイナスになっても確実に戻されるためwrappingしない
         return;
       }
-      
+
       // MARK: LD, LDHL
       case LD: {
         LoadTarget target = instruction.getLoadTarget();
@@ -472,24 +471,20 @@ public class CPU {
         }
         return;
       }
-      
+
       case LDHL: {
         int r8 = readNextByte();
-        
-        // Fix flag calculations for SP+r8
         this.registers.f.zero = false;
         this.registers.f.subtract = false;
         this.registers.f.halfCarry = ((this.sp & 0x0F) + (r8 & 0x0F)) > 0x0F;
         this.registers.f.carry = ((this.sp & 0xFF) + (r8 & 0xFF)) > 0xFF;
-        
         if (r8 > 127) r8 = r8 - 256; // 符号付き8ビットに変換
-        
         int result = this.sp + r8;
         this.registers.set_hl(result & 0xFFFF);
         return;
       }
-      
-      // MARK: スタック操作命令
+
+      // MARK: PUSH
       case PUSH: {
         StackTarget target = instruction.getStackTarget();
         int value;
@@ -512,7 +507,8 @@ public class CPU {
         push(value);
         return;
       }
-      
+
+      // MARK: POP
       case POP: {
         StackTarget target = instruction.getStackTarget();
         int value = pop();
@@ -534,22 +530,22 @@ public class CPU {
         }
         return;
       }
-      
-      // MARK: サブルーチン命令
+
+      // MARK: CALL
       case CALL: {
         JumpTest test = instruction.getJumpTest();
         boolean condition = testJumpCondition(test);
         int pc = call(condition);
-        this.pc = wrappingSub(pc, 3); // 共通処理としてCALL命令のバイト数分進められるため，それを考慮して引く
-
+        this.pc = pc - 3; // 共通処理としてCALL命令のバイト数分進められるため，それを考慮して引く
         return;
       }
-      
+
+      // MARK: RET
       case RET: {
         JumpTest test = instruction.getJumpTest();
         boolean condition = testJumpCondition(test);
         int pc = return_(condition); // return_メソッドは条件に基づいてPCを返す
-        this.pc = wrappingSub(pc, 1); // 共通処理としてRET命令のバイト数分進められるため，それを考慮して引く
+        this.pc = pc - 1; // 共通処理としてRET命令のバイト数分進められるため，それを考慮して引く
         return;
       }
       
@@ -1050,10 +1046,10 @@ public class CPU {
     if (condition) {
       int offset = readNextByte();
       // 符号付き8ビットとして扱う
-      if (offset > 127) offset = offset - 256;
-      return overflowingAdd(overflowingAdd(this.pc, 2).value, offset).value;
+      if ((offset & 0x80) != 0) offset -= 256;
+      return wrappingAdd16(wrappingAdd16(this.pc, 2), offset);
     } else {
-      return overflowingAdd(this.pc, 2).value; // 2バイト足す
+      return wrappingAdd16(this.pc, 2); // 2バイト足す
     }
   }
 

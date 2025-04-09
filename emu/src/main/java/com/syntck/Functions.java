@@ -46,6 +46,14 @@ public class Functions {
     return result;
   }
 
+  public static int wrappingAdd16(int a, int b) {
+    int result = a + b;
+    if (result > 0xFFFF) {
+      result &= 0xFFFF; // 必ず16ビットでマスク
+    }
+    return result;
+  }
+
   public static int wrappingAdd(int a, int b) {
     // 入力値に基づいて8ビットか16ビット演算かを判断
     boolean is16Bit = a > 0xFF || b > 0xFF;
