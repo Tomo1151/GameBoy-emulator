@@ -20,7 +20,7 @@ public class Functions {
   }
 
   // Fix overflowingSubtract to handle 16-bit values
-  public static OverflowSubtractResult overflowingSubtract(int a, int b) {
+  public static OverflowSubtractResult overflowingSub(int a, int b) {
     int result = a - b;
     // Determine if this is an 8-bit or 16-bit operation based on the inputs
     boolean is16Bit = a > 0xFF || b > 0xFF;
@@ -36,6 +36,14 @@ public class Functions {
     }
     
     return new OverflowSubtractResult(result);
+  }
+
+  public static int wrappingSub16(int a, int b) {
+    int result = a - b;
+    if (result < 0) {
+      result &= 0xFFFF; // 必ず16ビットでマスク
+    }
+    return result;
   }
 
   public static int wrappingAdd(int a, int b) {

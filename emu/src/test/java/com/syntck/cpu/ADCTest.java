@@ -1,7 +1,5 @@
 package com.syntck.cpu;
 
-import static com.syntck.Functions.*;
-
 import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.DisplayName;
