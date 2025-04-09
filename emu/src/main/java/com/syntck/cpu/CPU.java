@@ -191,44 +191,6 @@ public class CPU {
         this.registers.f.halfCarry = true;
         return;
       }
-      
-      case RRA: {
-        boolean carry = this.registers.f.carry;
-        this.registers.f.carry = (this.registers.a & 0x01) == 0x01;
-        this.registers.a = ((this.registers.a >> 1) | (carry ? 0x80 : 0x00)) & 0xFF;
-        this.registers.f.zero = false;
-        this.registers.f.subtract = false;
-        this.registers.f.halfCarry = false;
-        return;
-      }
-      
-      case RLA: {
-        boolean carry = this.registers.f.carry;
-        this.registers.f.carry = (this.registers.a & 0x80) == 0x80;
-        this.registers.a = ((this.registers.a << 1) | (carry ? 0x01 : 0x00)) & 0xFF;
-        this.registers.f.zero = false;
-        this.registers.f.subtract = false;
-        this.registers.f.halfCarry = false;
-        return;
-      }
-      
-      case RRCA: {
-        this.registers.f.carry = (this.registers.a & 0x01) == 0x01;
-        this.registers.a = ((this.registers.a >> 1) | (this.registers.f.carry ? 0x80 : 0x00)) & 0xFF;
-        this.registers.f.zero = false;
-        this.registers.f.subtract = false;
-        this.registers.f.halfCarry = false;
-        return;
-      }
-
-      case RLCA: {
-        this.registers.f.carry = (this.registers.a & 0x80) == 0x80;
-        this.registers.a = ((this.registers.a << 1) | (this.registers.f.carry ? 0x01 : 0x00)) & 0xFF;
-        this.registers.f.zero = false;
-        this.registers.f.subtract = false;
-        this.registers.f.halfCarry = false;
-        return;
-      }
 
       // MARK: BIT [prefixed]
       case BIT: {
@@ -281,6 +243,90 @@ public class CPU {
         this.registers.f.subtract = false;
         this.registers.f.halfCarry = false;
         this.registers.f.carry = false;
+        setValueForRotateTarget(target, result);
+        return;
+      }
+
+      // MARK: RLA, RRA, RLCA, RRCA
+      case RLA: {
+        RotateTarget target = RotateTarget.A;
+        int value = getValueForRotateTarget(target);
+        boolean currentCflag = this.registers.f.carry;
+        this.registers.f.carry = ((value & 0x80) != 0);
+        value = (value << 1) & 0xFF;
+        int result = value | (currentCflag ? 0x01 : 0);
+        this.registers.f.zero = false;
+        this.registers.f.subtract = false;
+        this.registers.f.halfCarry = false;
+        setValueForRotateTarget(target, result);
+        return;
+      }
+
+      case RLCA: {
+        RotateTarget target = RotateTarget.A;
+        int value = getValueForRotateTarget(target);
+        boolean msb = (value & 0x80) != 0;
+        int result = ((value << 1) | (msb ? 0x01 : 0)) & 0xFF;
+        this.registers.f.zero = false;
+        this.registers.f.subtract = false;
+        this.registers.f.halfCarry = false;
+        this.registers.f.carry = msb;
+        setValueForRotateTarget(target, result);
+        return;
+      }
+
+      case RRA: {
+        RotateTarget target = RotateTarget.A;
+        int value = getValueForRotateTarget(target);
+        value = (this.registers.a >> 1) & 0xFF;
+        if (this.registers.f.carry) {
+          value |= 0x80; // キャリーがセットされている場合、MSBを1にする
+        }
+        this.registers.f.zero = false;
+        this.registers.f.subtract = false;
+        this.registers.f.halfCarry = false;
+        this.registers.f.carry = (this.registers.a & 0x01) != 0;
+        setValueForRotateTarget(target, value);
+        return;
+      }
+
+      case RRCA: {
+        RotateTarget target = RotateTarget.A;
+        int value = getValueForRotateTarget(target);
+        boolean lsb = (value & 0x01) != 0;
+        int result = ((value >> 1) | (lsb ? 0x80 : 0)) & 0xFF;
+        this.registers.f.zero = false;
+        this.registers.f.subtract = false;
+        this.registers.f.halfCarry = false;
+        this.registers.f.carry = lsb;
+        setValueForRotateTarget(target, result);
+        return;
+      }
+
+      // MARK: RL, RLC, RR, RRC [prefixed]
+      case RL: {
+        RotateTarget target = instruction.getRotateTarget();
+        int value = getValueForRotateTarget(target);
+        boolean currentCflag = this.registers.f.carry;
+        this.registers.f.carry = ((value & 0x80) != 0);
+        value = (value << 1) & 0xFF;
+        int result = value | (currentCflag ? 0x01 : 0);
+        this.registers.f.zero = result == 0;
+        this.registers.f.subtract = false;
+        this.registers.f.halfCarry = false;
+        setValueForRotateTarget(target, result);
+        return;
+      }
+
+      case RLC: {
+        RotateTarget target = instruction.getRotateTarget();
+        int value = getValueForRotateTarget(target);
+        boolean msb = (value & 0x80) != 0;
+        int result = ((value << 1) | (msb ? 0x01 : 0)) & 0xFF;
+        this.registers.f.zero = result == 0;
+        this.registers.f.subtract = false;
+        this.registers.f.halfCarry = false;
+        this.registers.f.carry = msb;
         setValueForRotateTarget(target, result);
         return;
       }
