@@ -59,10 +59,6 @@ public class Functions {
   }
 
   public static boolean compareFlagsRegister(FlagsRegister actual, boolean zero, boolean subtract, boolean halfCarry, boolean carry) {
-    System.out.println("actual.zero: " + actual.zero + ", expected.zero: " + zero);
-    System.out.println("actual.subtract: " + actual.subtract + ", expected.subtract: " + subtract);
-    System.out.println("actual.halfCarry: " + actual.halfCarry + ", expected.halfCarry: " + halfCarry);
-    System.out.println("actual.carry: " + actual.carry + ", expected.carry: " + carry);
     return zero == actual.zero &&
            subtract == actual.subtract &&
            halfCarry == actual.halfCarry &&

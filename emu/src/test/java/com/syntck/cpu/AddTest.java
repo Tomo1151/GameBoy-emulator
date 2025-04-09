@@ -191,10 +191,8 @@ public class ADDTest {
     cpu.registers.a = 0xFF;
     cpu.registers.c = 0x02;
     cpu.step();
-    cpu.registers.f.dump();
     assertEquals(0x01, cpu.registers.a);
     assertEquals(0x0001, cpu.pc);
-    cpu.registers.f.dump();
 
     assertTrue(
         compareFlagsRegister(
