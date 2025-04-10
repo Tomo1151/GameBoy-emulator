@@ -4,6 +4,12 @@ import java.io.FileInputStream;
 
 public class Cartridge {
   public int[] binaryData; // ROMのバイナリデータを格納する配列
+  public boolean isCGB; // CGBフラグ
+  public boolean isSGB; // SGBフラグ
+  public CartridgeType cartridgeType; // カートリッジタイプ
+  public RomSize romSize; // ROMサイズ
+  public RamSize ramSize; // RAMサイズ
+  public int version; // ROMバージョン
 
   public Cartridge(String file) {
     try (FileInputStream fis = new FileInputStream(file)) {
@@ -15,8 +21,143 @@ public class Cartridge {
       for (int i = 0; i < fileSize; i++) {
         binaryData[i] = fis.read(); // 1バイトずつ読み込む
       }
+
+      this.isCGB = (binaryData[0x0143] == 0xC0); // CGBフラグを取得
+      this.isSGB = (binaryData[0x0146] == 0x03); // SGBフラグを取得
+      setCartridgeType(binaryData[0x0147]); // カートリッジタイプを取得
+      setRomSize(binaryData[0x0148]); // ROMサイズを取得
+      setRamSize(binaryData[0x0149]); // RAMサイズを取得
+      this.version = binaryData[0x014C]; // ROMのバージョンを取得
+
+      System.out.println("Cartridge loaded: \n" +
+                         "CGB: " + this.isCGB + "\n" +
+                         "SGB: " + this.isSGB + "\n" +
+                         "Cartridge Type: " + this.cartridgeType + "\n" +
+                         "ROM Size: " + this.romSize + "\n" +
+                         "RAM Size: " + this.ramSize + "\n" +
+                         "Version: " + this.version);
     } catch (Exception e) {
       e.printStackTrace(); // エラーが発生した場合はスタックトレースを表示
+    }
+  }
+
+  public int readByte(int address) {
+    if (address < 0 || address >= binaryData.length) {
+      throw new IllegalArgumentException("Address out of bounds: " + String.format("0x%04X", address));
+    }
+    return binaryData[address]; // 指定されたアドレスからバイトを読み取る
+  }
+
+  public void writeByte(int address, int value) {}
+
+  public void setRamSize(int ramSize) {
+    switch (ramSize) {
+      case 0x00:
+        this.ramSize = RamSize.NO_RAM;
+        break;
+      case 0x01:
+        this.ramSize = RamSize.UNUSED;
+        break;
+      case 0x02:
+        this.ramSize = RamSize.BANK_1;
+        break;
+      case 0x03:
+        this.ramSize = RamSize.BANK_4;
+        break;
+      case 0x04:
+        this.ramSize = RamSize.BANK_16;
+        break;
+      case 0x05:
+        this.ramSize = RamSize.BANK_8;
+        break;
+      default:
+        throw new IllegalArgumentException("Invalid RAM size: " + ramSize);
+    }
+  }
+
+  public void setRomSize(int romSize) {
+    switch (romSize) {
+      case 0x00:
+        this.romSize = RomSize.BANK_2;
+        break;
+      case 0x01:
+        this.romSize = RomSize.BANK_4;
+        break;
+      case 0x02:
+        this.romSize = RomSize.BANK_8;
+        break;
+      case 0x03:
+        this.romSize = RomSize.BANK_16;
+        break;
+      case 0x04:
+        this.romSize = RomSize.BANK_32;
+        break;
+      case 0x05:
+        this.romSize = RomSize.BANK_64;
+        break;
+      case 0x06:
+        this.romSize = RomSize.BANK_128;
+        break;
+      case 0x07:
+        this.romSize = RomSize.BANK_256;
+        break;
+      case 0x08:
+        this.romSize = RomSize.BANK_512;
+        break;
+      case 0x52:
+        this.romSize = RomSize.BANK_72;
+        break;
+      case 0x53:
+        this.romSize = RomSize.BANK_80;
+        break;
+      case 0x54:
+        this.romSize = RomSize.BANK_96;
+        break;
+      default:
+        throw new IllegalArgumentException("Invalid ROM size: " + romSize);
+    }
+  }
+
+  public void setCartridgeType(int cartridgeType) {
+    switch (cartridgeType) {
+      case 0x00:
+        this.cartridgeType = CartridgeType.ROM_ONLY;
+        break;
+      case 0x01:
+        this.cartridgeType = CartridgeType.MBC1;
+        break;
+      case 0x02:
+        this.cartridgeType = CartridgeType.MBC2;
+        break;
+      case 0x03:
+        this.cartridgeType = CartridgeType.ROM_RAM;
+        break;
+      case 0x04:
+        this.cartridgeType = CartridgeType.MBC3_TIMER_BATTERY;
+        break;
+      case 0x05:
+        this.cartridgeType = CartridgeType.MBC5;
+        break;
+      case 0x06:
+        this.cartridgeType = CartridgeType.MBC6;
+        break;
+      case 0x07:
+        this.cartridgeType = CartridgeType.MBC7_SENSOR;
+        break;
+      case 0x08:
+        this.cartridgeType = CartridgeType.POCKET_CAMERA;
+        break;
+      case 0x09:
+        this.cartridgeType = CartridgeType.BANDAI_TAMA5;
+        break;
+      case 0x0A:
+        this.cartridgeType = CartridgeType.HuC3;
+        break;
+      case 0x0B:
+        this.cartridgeType = CartridgeType.HuC1_RAM_BATTERY;
+        break;
+      default:
+        throw new IllegalArgumentException("Invalid cartridge type: " + cartridgeType);
     }
   }
 
@@ -37,5 +178,74 @@ public class Cartridge {
       }
     }
     System.out.println(); // 最後に改行
+  }
+}
+
+enum CartridgeType {
+  ROM_ONLY(0x00),
+  MBC1(0x01),
+  MBC2(0x02),
+  ROM_RAM(0x03),
+  MBC3_TIMER_BATTERY(0x04),
+  MBC5(0x05),
+  MBC6(0x06),
+  MBC7_SENSOR(0x07),
+  POCKET_CAMERA(0x08),
+  BANDAI_TAMA5(0x09),
+  HuC3(0x0A),
+  HuC1_RAM_BATTERY(0x0B);
+
+  private final int value;
+
+  CartridgeType(int value) {
+    this.value = value;
+  }
+
+  public int getValue() {
+    return value;
+  }
+}
+
+enum RomSize {
+  BANK_2(0x00),
+  BANK_4(0x01),
+  BANK_8(0x02),
+  BANK_16(0x03),
+  BANK_32(0x04),
+  BANK_64(0x05),
+  BANK_128(0x06),
+  BANK_256(0x07),
+  BANK_512(0x08),
+  BANK_72(0x52),
+  BANK_80(0x53),
+  BANK_96(0x54);
+
+  private final int value;
+
+  RomSize(int value) {
+    this.value = value;
+  }
+
+  public int getValue() {
+    return value;
+  }
+}
+
+enum RamSize {
+  NO_RAM(0x00),
+  UNUSED(0x01),
+  BANK_1(0x02),
+  BANK_4(0x03),
+  BANK_16(0x04),
+  BANK_8(0x05);
+
+  private final int value;
+
+  RamSize(int value) {
+    this.value = value;
+  }
+
+  public int getValue() {
+    return value;
   }
 }
