@@ -69,25 +69,46 @@ public class GPU {
 
   private void drawFrame() {
     // this.frameBuffer を全部書き換える
-    for (int addr = 0; addr < this.frameBuffer.length; addr++) {
+    for (int addr = 0x9800; addr <= 0x9BFF; addr++) {
+      // System.out.println("addr: " + String.format("0x%04X", addr));
       int vramAddr = addr - VRAM_BEGIN; // タイルのインデックスが保存されている先頭アドレスをVRAMのアドレスに変換
+      // System.out.println("vramAddr: " + String.format("0x%04X", vramAddr));
       int index = vramAddr - 0x1800;
+      // System.out.println("index: " + String.format("0x%04X", index));
       Tile tile = this.tiles[this.vram[vramAddr]]; // タイルを取得
+      // System.out.println("tile: " + tile);
+
       int screenX = ((index) % 32) * Tile.TILE_LENGTH; // タイルのX座標の始点を計算
       int screenY = ((index) / 32) * Tile.TILE_LENGTH; // タイルのY座標の始点を計算
+      // System.out.println("sx: " + screenX + ", sy: " + screenY);
 
 
+      // System.out.println("Tile print");
       for (int tileX = 0; tileX < Tile.TILE_LENGTH; tileX++) {
         for (int tileY = 0; tileY < Tile.TILE_LENGTH; tileY++) {
           TilePixelValue pixel = tile.pixels[tileY][tileX]; // タイルのピクセル値を取得
           int x = screenX + tileX; // タイルのX座標を計算
           int y = screenY + tileY; // タイルのY座標を計算
 
-          if (x > 160 || y > 144) continue; // 画面外のタイルは無視
+          if (x >= SCREEN_WIDTH || y >= SCREEN_HEIGHT) continue; // 画面外のタイルは無視
 
-          this.frameBuffer[y * SCREEN_WIDTH + x] = pixel.ordinal(); // ピクセル値をフレームバッファに書き込む
+          int pixelNum = 0;
+          if (pixel == TilePixelValue.Zero) {
+            pixelNum = 0; // 黒
+          } else if (pixel == TilePixelValue.One) {
+            pixelNum = 1; // ダークグレー
+          } else if (pixel == TilePixelValue.Two) {
+            pixelNum = 2; // ライトグレー
+          } else if (pixel == TilePixelValue.Three) {
+            pixelNum = 3; // 白
+          }
+
+          // System.out.print(pixelNum + " ");
+          this.frameBuffer[y * SCREEN_WIDTH + x] = pixelNum; // ピクセル値をフレームバッファに書き込む
         }
+        // System.out.println();
       }
+      // System.out.println();
     }
   }
 

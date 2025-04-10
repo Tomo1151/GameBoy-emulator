@@ -14,7 +14,7 @@ public class CPU {
   public int cycles; // サイクル数
   public boolean interruptMasterEnable; // 割り込み許可フラグ
   private boolean halted; // HALTフラグ
-  private boolean debug = true;
+  private boolean debug = false;
 
   public CPU() {
     this.registers = new Registers();
@@ -493,7 +493,7 @@ public class CPU {
         LoadTarget target = instruction.getLoadTarget();
         LoadSource source = instruction.getLoadSource();
         int sourceValue = getValueForLoadSource(source);
-        System.out.println("LD: " + target + ", " + source + ", " + String.format("$%04X",sourceValue));
+        if (this.debug) System.out.println("LD: " + target + ", " + source + ", " + String.format("$%04X",sourceValue));
         setValueForLoadTarget(target, sourceValue, source == LoadSource.A);
         if (target == LoadTarget.HLI_ADDR || source == LoadSource.HLI_ADDR) {
           this.registers.set_hl(wrappingAdd(this.registers.get_hl(), 1));
@@ -597,7 +597,10 @@ public class CPU {
         // RST命令は、指定されたアドレスにPCを保存し、指定されたアドレスにジャンプする
         // 0x00, 0x08, 0x10, 0x18, 0x20, 0x28, 0x30, 0x38 のいずれか
         int address = instruction.getImmediateValue();
-        this.pc = Math.max(wrappingSub(address, 1), 0x0000);
+        // スタックに現在のPCを保存
+        push(this.pc + 1); // 現在のPCをスタックに保存
+        // 指定されたアドレスにジャンプ
+        this.pc = address - 1; // 共通処理としてRST命令のバイト数分進められるため，それを考慮して引く
         return true;
       }
 
@@ -659,7 +662,7 @@ public class CPU {
     
     // 命令をデコード
     Instruction instruction = Instruction.fromByte(instructionByte, isPrefixed);
-    System.out.println("PC: " + String.format("$%04X", this.pc) + " SP: " + String.format("$%04X", this.sp) + " isPrefixed: " + isPrefixed + " Instruction: " + String.format("%04X", instructionByte) + " " + instruction.getType() + " " + (instruction.operand0) + " " + (instruction.operand1));
+    if (this.debug) System.out.println("PC: " + String.format("$%04X", this.pc) + " SP: " + String.format("$%04X", this.sp) + " isPrefixed: " + isPrefixed + " Instruction: " + String.format("%04X", instructionByte) + " " + instruction.getType() + " " + (instruction.operand0) + " " + (instruction.operand1));
 
     if (instruction != null && instruction.isValid()) {
       // 命令を実行，実行されたかどうかを取得 (CALL / JR / RET など)
@@ -671,11 +674,11 @@ public class CPU {
       int cycles = InstructionLengthUtil.getInstructionCycles(instructionByte, isPrefixed, condition);
 
       // updateTimers(cycles);
-      // this.bus.gpu.update(cycles);
+      this.bus.gpu.update(cycles);
       // handleInterrupts();
 
       // Logging
-      System.out.println(String.format("PC updated: +%d = 0x%04X", this.pc - prevPC, this.pc) + String.format(" SP updated: 0x%4X", this.sp) + " Cycles: " + cycles + "\n");
+      if (this.debug) System.out.println(String.format("PC updated: +%d = 0x%04X", this.pc - prevPC, this.pc) + String.format(" SP updated: 0x%4X", this.sp) + " Cycles: " + cycles + "\n");
 
     } else {
       // Handle invalid instruction
@@ -809,7 +812,7 @@ public class CPU {
   int jump(boolean condition) {
     if (condition) {
       int value = readNextWord();
-      System.out.println("Jump to: " + String.format("$%04X", value));
+      if (this.debug) System.out.println("Jump to: " + String.format("$%04X", value));
       return value; // 次のワード(2byte)を読み込む
     } else {
       return overflowingAdd(this.pc, 3).value; // 3バイト足す
@@ -897,7 +900,7 @@ public class CPU {
       case HL_ADDR: return this.bus.readByte(this.registers.get_hl());
       case D8: {
         int value = readNextByte();
-        System.out.println("Compare A with: " + String.format("$%04X", value));
+        if (this.debug) System.out.println("Compare A with: " + String.format("$%04X", value));
         return value;
       }
       default:
