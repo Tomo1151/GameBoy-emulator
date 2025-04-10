@@ -648,8 +648,10 @@ public class CPU {
 
       int cycles = InstructionLengthUtil.getInstructionCycles(instructionByte, isPrefixed, condition);
 
+      // updateTimers(cycles);
+      // updateGraphics(cycles);
+      // handleInterrupts();
 
-      log("Cycles taken: " + cycles);
     } else {
       // Handle invalid instruction
       throw new IllegalArgumentException("Invalid instruction: " + String.format("%02X", instructionByte) + " isPrefixed: " + isPrefixed);
