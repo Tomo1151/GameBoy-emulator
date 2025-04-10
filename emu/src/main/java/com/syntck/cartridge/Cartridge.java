@@ -123,7 +123,7 @@ public class Cartridge {
     }
   }
 
-  public void setCartridgeType(int cartridgeType) {
+  public void setCartridgeType(int cartridgeType) { // TODO MBC1以外のマッパーを実装する
     switch (cartridgeType) {
       case 0x00:
         this.cartridgeType = CartridgeType.ROM_ONLY;
@@ -131,36 +131,47 @@ public class Cartridge {
         break;
       case 0x01:
         this.cartridgeType = CartridgeType.MBC1;
+        this.mapper = new MBC1(this.binaryData, this.romSize.getValue(), this.ramSize.getValue());
         break;
       case 0x02:
         this.cartridgeType = CartridgeType.MBC2;
+        this.mapper = new MBC1(this.binaryData, this.romSize.getValue(), this.ramSize.getValue());
         break;
       case 0x03:
         this.cartridgeType = CartridgeType.ROM_RAM;
+        this.mapper = new MBC1(this.binaryData, this.romSize.getValue(), this.ramSize.getValue());
         break;
       case 0x04:
         this.cartridgeType = CartridgeType.MBC3_TIMER_BATTERY;
+        this.mapper = new MBC1(this.binaryData, this.romSize.getValue(), this.ramSize.getValue());
         break;
       case 0x05:
         this.cartridgeType = CartridgeType.MBC5;
+        this.mapper = new MBC1(this.binaryData, this.romSize.getValue(), this.ramSize.getValue());
         break;
       case 0x06:
         this.cartridgeType = CartridgeType.MBC6;
+        this.mapper = new MBC1(this.binaryData, this.romSize.getValue(), this.ramSize.getValue());
         break;
       case 0x07:
         this.cartridgeType = CartridgeType.MBC7_SENSOR;
+        this.mapper = new MBC1(this.binaryData, this.romSize.getValue(), this.ramSize.getValue());
         break;
       case 0x08:
         this.cartridgeType = CartridgeType.POCKET_CAMERA;
+        this.mapper = new MBC1(this.binaryData, this.romSize.getValue(), this.ramSize.getValue());
         break;
       case 0x09:
         this.cartridgeType = CartridgeType.BANDAI_TAMA5;
+        this.mapper = new MBC1(this.binaryData, this.romSize.getValue(), this.ramSize.getValue());
         break;
       case 0x0A:
         this.cartridgeType = CartridgeType.HuC3;
+        this.mapper = new MBC1(this.binaryData, this.romSize.getValue(), this.ramSize.getValue());
         break;
       case 0x0B:
         this.cartridgeType = CartridgeType.HuC1_RAM_BATTERY;
+        this.mapper = new MBC1(this.binaryData, this.romSize.getValue(), this.ramSize.getValue());
         break;
       default:
         throw new IllegalArgumentException("Invalid cartridge type: " + cartridgeType);

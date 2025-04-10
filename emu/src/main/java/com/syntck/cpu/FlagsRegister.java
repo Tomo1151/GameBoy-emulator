@@ -12,7 +12,7 @@ public class FlagsRegister {
   public boolean carry; // C flag
 
   public FlagsRegister() {
-    this.zero = false;
+    this.zero = true;
     this.subtract = false;
     this.halfCarry = false;
     this.carry = false;

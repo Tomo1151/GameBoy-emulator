@@ -16,7 +16,7 @@ public class GPU {
   public int[] vram = new int[VRAM_SIZE];
   public Tile[] tiles = new Tile[384];
 
-  public int[] frameBuffer = new int[SCREEN_WIDTH * SCREEN_HEIGHT];
+  private int[] frameBuffer = new int[SCREEN_WIDTH * SCREEN_HEIGHT];
   private int scanlineCounter;
 
   public GPU() {
@@ -52,6 +52,7 @@ public class GPU {
       if (currentLine == 144) {
         // VBlank開始
         // VBlankフラグをセット
+        this.drawFrame();
       } else if (currentLine < 144) {
         // 画面描画中
         this.drawScanline(currentLine);
@@ -88,6 +89,10 @@ public class GPU {
         }
       }
     }
+  }
+
+  public int[] getFrames() {
+    return this.frameBuffer;
   }
 
   public int readVRAM(int address) {

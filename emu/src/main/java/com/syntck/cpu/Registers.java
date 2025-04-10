@@ -10,6 +10,17 @@ public class Registers {
   public int h;
   public int l;
 
+  public Registers() {
+    this.a = 0x01; // Aレジスタの初期値
+    this.b = 0x00; // Bレジスタの初期値
+    this.c = 0x13; // Cレジスタの初期値
+    this.d = 0x00; // Dレジスタの初期値
+    this.e = 0xD8; // Eレジスタの初期値
+    this.h = 0x01; // Hレジスタの初期値
+    this.l = 0x4D; // Lレジスタの初期値
+    this.f = new FlagsRegister(); // Fレジスタの初期値
+  }
+
   int get_bc() {
     return (this.b << 8) | this.c;
   }

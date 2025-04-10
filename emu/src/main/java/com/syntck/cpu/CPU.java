@@ -4,6 +4,7 @@ import static com.syntck.Functions.*;
 
 import com.syntck.Functions.OverflowingAddResult;
 import com.syntck.memory.MemoryBus;
+import com.syntck.cartridge.Cartridge;
 
 public class CPU {
   public Registers registers; // CPU レジスタ
@@ -16,12 +17,23 @@ public class CPU {
 
   public CPU() {
     this.registers = new Registers();
+    this.bus = new MemoryBus(this, null); // Cartridgeはnullで初期化
+    this.pc = 0x0100; // プログラムカウンタの初期値
+    this.sp = 0xFFFE; // スタックポインタの初期値
+    this.interruptMasterEnable = false;
+    this.halted = false;
+  }
+
+  public CPU(Cartridge cartridge) {
+    this.registers = new Registers();
     this.registers.f = new FlagsRegister();
-    this.bus = new MemoryBus(this);
+    this.bus = new MemoryBus(this, cartridge);
     this.pc = 0x0000; // プログラムカウンタの初期値
     this.sp = 0xFFFF; // スタックポインタの初期値
     this.interruptMasterEnable = false;
     this.halted = false;
+
+    this.bus.writeByte(0xFF50, 1);
   }
 
   public boolean getInterruptMasterEnable() {

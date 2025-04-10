@@ -1,16 +1,19 @@
 package com.syntck.memory;
 import com.syntck.cpu.CPU;
 import com.syntck.gpu.GPU;
+import com.syntck.cartridge.Cartridge;
 
 public class MemoryBus {
   public static final int MEMORY_SIZE = 0xFFFF; // 64KB of memory
   public int[] memory = new int[MEMORY_SIZE]; // Memory array
   public CPU cpu; // CPU instance
   public GPU gpu; // GPU instance
+  public Cartridge cartridge; // Cartridge instance
 
-  public MemoryBus(CPU cpu) {
+  public MemoryBus(CPU cpu, Cartridge cartridge) {
     this.cpu = cpu; // Initialize the CPU instance
     this.gpu = new GPU(); // Initialize the GPU instance
+    this.cartridge = cartridge; // Initialize the cartridge instance
   }
 
   public int readByte(int address) {
@@ -18,6 +21,13 @@ public class MemoryBus {
       throw new IllegalArgumentException("Address out of bounds: " + String.format("0x%04X", address));
     }
 
+    // ROMがなければ、メモリから直接読み取る (CPUテスト用の苦肉の策)
+    if (this.cartridge == null) return memory[address];
+    if (address == 0xFF50) return memory[address];
+
+    if (0x0000 <= address && address <= 0x8000) {
+      return this.cartridge.readByte(address); // Read from the cartridge if address is in ROM range
+    }
     if (address == 0xFF41) {
     return this.gpu.status.convertToInt(); // LCDステータスレジスタの値を返す
     } else if (address == 0xFF40) {
@@ -36,6 +46,8 @@ public class MemoryBus {
     if (address < 0 || address >= MEMORY_SIZE) {
       throw new IllegalArgumentException("Address out of bounds: " + String.format("0x%04X", address));
     }
+
+    if (address == 0xFF50) this.memory[address] = value; // 0xFF50は無視する
 
     if (address == 0xFF40) {
       this.gpu.controls.convertFromInt(value); // LCD制御レジスタに値を設定
