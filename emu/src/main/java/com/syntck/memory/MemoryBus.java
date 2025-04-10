@@ -1,19 +1,36 @@
 package com.syntck.memory;
+import com.syntck.cpu.CPU;
+import com.syntck.gpu.GPU;
 
 public class MemoryBus {
   public static final int MEMORY_SIZE = 0xFFFF; // 64KB of memory
   public int[] memory = new int[MEMORY_SIZE]; // Memory array
+  public CPU cpu; // CPU instance
+  public GPU gpu; // GPU instance
+
+  public MemoryBus(CPU cpu) {
+    this.cpu = cpu; // Initialize the CPU instance
+  }
 
   public int readByte(int address) {
     if (address < 0 || address >= MEMORY_SIZE) {
       throw new IllegalArgumentException("Address out of bounds: " + String.format("0x%04X", address));
     }
-    return memory[address]; // Read a byte from the specified address
+
+    if (GPU.VRAM_BEGIN <= address && address <= GPU.VRAM_END) {
+      return this.gpu.readVRAM(address - GPU.VRAM_BEGIN); // アドレスがVRAMの範囲内の場合、GPUから読み取る
+    }
+    return memory[address];
   }
 
   public void writeByte(int address, int value) {
     if (address < 0 || address >= MEMORY_SIZE) {
       throw new IllegalArgumentException("Address out of bounds: " + String.format("0x%04X", address));
+    }
+
+    if (GPU.VRAM_BEGIN <= address && address <= GPU.VRAM_END) {
+      this.gpu.writeVRAM(address - GPU.VRAM_BEGIN, value); // アドレスがVRAMの範囲内の場合、GPUに書き込む
+      return;
     }
     memory[address] = value; // Write a byte to the specified address
   }

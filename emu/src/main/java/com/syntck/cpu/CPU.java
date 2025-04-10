@@ -16,7 +16,7 @@ public class CPU {
   public CPU() {
     this.registers = new Registers();
     this.registers.f = new FlagsRegister();
-    this.bus = new MemoryBus();
+    this.bus = new MemoryBus(this);
     this.pc = 0x0000; // プログラムカウンタの初期値
     this.sp = 0xFFFF; // スタックポインタの初期値
     this.interruptMasterEnable = false;
