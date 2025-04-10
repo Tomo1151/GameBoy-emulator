@@ -47,6 +47,10 @@ public class MemoryBus {
       throw new IllegalArgumentException("Address out of bounds: " + String.format("0x%04X", address));
     }
 
+    if (address == 0xFF01) {
+      System.out.print((char) value); // 0xFF01はコンソールに出力する
+    }
+
     if (address == 0xFF50) this.memory[address] = value; // 0xFF50は無視する
 
     if (address == 0xFF40) {
