@@ -35,7 +35,7 @@ public class CPU {
 
   // MARK: 命令の実行
   // 引数に与えられた命令を実行し、次のPCを返す
-  int execute(Instruction instruction) throws IllegalArgumentException {
+  boolean execute(Instruction instruction) throws IllegalArgumentException {
     switch (instruction.getType()) {
       // MARK: ADD (A, HL, SP), ADC
       case ADD: {
@@ -44,7 +44,7 @@ public class CPU {
         int value = getValueForArithmeticTarget(target);
         int newValue = addA(value);
         this.registers.a = newValue;
-        return;
+        return true;
       }
 
       case ADDHL: {
@@ -53,7 +53,7 @@ public class CPU {
         int value = getValueForRegisterPair(pair);
         int result = addHL(value);
         this.registers.set_hl(result);
-        return;
+        return true;
       }
 
       case ADDSP: {
@@ -61,7 +61,7 @@ public class CPU {
         int value = readNextByte();
         if (value > 0xFF) value = value - 0x100; // 符号付き8ビットに変換
         this.sp = addSP(value);
-        return;
+        return true;
       }
 
       case ADC: {
@@ -71,7 +71,7 @@ public class CPU {
         int carryValue = this.registers.f.carry ? 1 : 0;
         int newValue = addWithCarry(value, carryValue);
         this.registers.a = newValue;
-        return;
+        return true;
       }
 
       // MARK: SUB, SBC
@@ -81,7 +81,7 @@ public class CPU {
         int value = getValueForArithmeticTarget(target);
         int newValue = subtract(value);
         this.registers.a = newValue;
-        return;
+        return true;
       }
 
       case SBC: {
@@ -91,7 +91,7 @@ public class CPU {
         int carryValue = this.registers.f.carry ? 1 : 0;
         int newValue = subtractWithCarry(value, carryValue);
         this.registers.a = newValue;
-        return;
+        return true;
       }
 
       // MARK: INC
@@ -101,7 +101,7 @@ public class CPU {
         int value = getValueForArithmeticTarget(target);
         int newValue = increment(value);
         setValueForArithmeticTarget(target, newValue);
-        return;
+        return true;
       }
 
       case INCRP: {
@@ -110,7 +110,7 @@ public class CPU {
         int value = getValueForRegisterPair(pair);
         int result = overflowingAdd(value, 1).value;
         setValueForRegisterPair(pair, result);
-        return;
+        return true;
       }
 
       // MARK: DEC
@@ -120,7 +120,7 @@ public class CPU {
         int value = getValueForArithmeticTarget(target);
         int newValue = decrement(value);
         setValueForArithmeticTarget(target, newValue);
-        return;
+        return true;
       }
 
       case DECRP: {
@@ -129,7 +129,7 @@ public class CPU {
         int value = getValueForRegisterPair(pair);
         int result = wrappingSub16(value, 1);
         setValueForRegisterPair(pair, result);
-        return;
+        return true;
       }
 
       // MARK: CP
@@ -138,7 +138,7 @@ public class CPU {
         ArithmeticTarget target = instruction.getArithmeticTarget();
         int value = getValueForArithmeticTarget(target);
         cp(value); // CPは結果を保存しない
-        return;
+        return true;
       }
       
       // MARK: AND
@@ -148,7 +148,7 @@ public class CPU {
         int value = getValueForArithmeticTarget(target);
         int newValue = and(value);
         this.registers.a = newValue;
-        return;
+        return true;
       }
       
       // MARK: OR
@@ -158,7 +158,7 @@ public class CPU {
         int value = getValueForArithmeticTarget(target);
         int newValue = or(value);
         this.registers.a = newValue;
-        return;
+        return true;
       }
       
       // MARK: XOR
@@ -168,7 +168,7 @@ public class CPU {
         int value = getValueForArithmeticTarget(target);
         int newValue = xor(value);
         this.registers.a = newValue;
-        return;
+        return true;
       }
 
       // MARK: CCF, SCF, CPL
@@ -177,7 +177,7 @@ public class CPU {
         this.registers.f.carry = !this.registers.f.carry;
         this.registers.f.subtract = false;
         this.registers.f.halfCarry = false;
-        return;
+        return true;
       }
       
       case SCF: {
@@ -185,7 +185,7 @@ public class CPU {
         this.registers.f.carry = true;
         this.registers.f.subtract = false;
         this.registers.f.halfCarry = false;
-        return;
+        return true;
       }
       
       case CPL: {
@@ -193,7 +193,7 @@ public class CPU {
         this.registers.a = (~this.registers.a) & 0xFF;
         this.registers.f.subtract = true;
         this.registers.f.halfCarry = true;
-        return;
+        return true;
       }
 
       // MARK: BIT [prefixed]
@@ -207,7 +207,7 @@ public class CPU {
         this.registers.f.zero = !bitValue;
         this.registers.f.subtract = false;
         this.registers.f.halfCarry = true;
-        return;
+        return true;
       }
 
       // MARK: RES [prefixed]
@@ -219,7 +219,7 @@ public class CPU {
         int bitNumber = getBitNumber(bitPos);
         value &= ~(1 << bitNumber);
         setValueForRotateTarget(target, value);
-        return;
+        return true;
       }
 
       // MARK: SET [prefixed]
@@ -232,7 +232,7 @@ public class CPU {
 
         value |= (1 << bitNumber);
         setValueForRotateTarget(target, value);
-        return;
+        return true;
       }
 
       // MARK: SWAP [prefixed]
@@ -248,7 +248,7 @@ public class CPU {
         this.registers.f.halfCarry = false;
         this.registers.f.carry = false;
         setValueForRotateTarget(target, result);
-        return;
+        return true;
       }
 
       // MARK: RLA, RRA, RLCA, RRCA
@@ -264,7 +264,7 @@ public class CPU {
         this.registers.f.subtract = false;
         this.registers.f.halfCarry = false;
         setValueForRotateTarget(target, result);
-        return;
+        return true;
       }
 
       case RLCA: {
@@ -278,7 +278,7 @@ public class CPU {
         this.registers.f.halfCarry = false;
         this.registers.f.carry = msb;
         setValueForRotateTarget(target, result);
-        return;
+        return true;
       }
 
       case RRA: {
@@ -294,7 +294,7 @@ public class CPU {
         this.registers.f.halfCarry = false;
         this.registers.f.carry = (this.registers.a & 0x01) != 0;
         setValueForRotateTarget(target, value);
-        return;
+        return true;
       }
 
       case RRCA: {
@@ -308,7 +308,7 @@ public class CPU {
         this.registers.f.halfCarry = false;
         this.registers.f.carry = lsb;
         setValueForRotateTarget(target, result);
-        return;
+        return true;
       }
 
       // MARK: RL, RLC, RR, RRC [prefixed]
@@ -324,7 +324,7 @@ public class CPU {
         this.registers.f.subtract = false;
         this.registers.f.halfCarry = false;
         setValueForRotateTarget(target, result);
-        return;
+        return true;
       }
 
       case RLC: {
@@ -338,7 +338,7 @@ public class CPU {
         this.registers.f.halfCarry = false;
         this.registers.f.carry = msb;
         setValueForRotateTarget(target, result);
-        return;
+        return true;
       }
 
       case RR: {
@@ -355,7 +355,7 @@ public class CPU {
         this.registers.f.halfCarry = false;
         this.registers.f.carry = nextCflag;
         setValueForRotateTarget(target, value);
-        return;
+        return true;
       }
 
       case RRC: {
@@ -369,7 +369,7 @@ public class CPU {
         this.registers.f.halfCarry = false;
         this.registers.f.carry = lsb;
         setValueForRotateTarget(target, result);
-        return;
+        return true;
       }
 
       // MARK: SLA, SRA, SRL [prefixed]
@@ -384,7 +384,7 @@ public class CPU {
         this.registers.f.halfCarry = false;
         this.registers.f.carry = msb;
         setValueForRotateTarget(target, result);
-        return;
+        return true;
       }
 
       case SRA: {
@@ -400,7 +400,7 @@ public class CPU {
         this.registers.f.halfCarry = false;
         this.registers.f.carry = lsb;
         setValueForRotateTarget(target, result);
-        return;
+        return true;
       }
 
       case SRL: {
@@ -414,7 +414,7 @@ public class CPU {
         this.registers.f.halfCarry = false;
         this.registers.f.carry = lsb;
         setValueForRotateTarget(target, result);
-        return;
+        return true;
       }
 
       // Add implementation for DAA instruction
@@ -449,7 +449,7 @@ public class CPU {
         this.registers.f.halfCarry = false;
         this.registers.f.carry = carry;
 
-        return;
+        return true;
       }
 
       // MARK: JP, JPHL, JR
@@ -458,13 +458,13 @@ public class CPU {
         boolean condition = testJumpCondition(test);
         int pc = jump(condition);
         this.pc = pc - 3; // 共通処理としてJP命令のバイト数分進められるため，それを考慮して引く
-        return;
+        return true;
       }
 
       case JPHL: {
         int pc = jumpHL(); //this.bus.readByte(this.registers.get_hl())
         this.pc = pc - 1; // 共通処理としてJPHL命令のバイト数分進められるため，それを考慮して引く
-        return;
+        return true;
       }
 
       case JR: {
@@ -472,7 +472,7 @@ public class CPU {
         boolean condition = testJumpCondition(test);
         int pc = jumpRelative(condition);
         this.pc = pc - 2; // 共通処理としてJR命令のバイト数分進められるため，それを考慮して引く, 一時的にマイナスになっても確実に戻されるためwrappingしない
-        return;
+        return true;
       }
 
       // MARK: LD, LDHL
@@ -487,7 +487,7 @@ public class CPU {
         if (target == LoadTarget.HLD_ADDR || source == LoadSource.HLD_ADDR) {
           this.registers.set_hl(wrappingSub(this.registers.get_hl(), 1));
         }
-        return;
+        return true;
       }
 
       case LDHL: {
@@ -499,7 +499,7 @@ public class CPU {
         if (r8 > 127) r8 = r8 - 256; // 符号付き8ビットに変換
         int result = this.sp + r8;
         this.registers.set_hl(result & 0xFFFF);
-        return;
+        return true;
       }
 
       // MARK: PUSH
@@ -523,7 +523,7 @@ public class CPU {
             throw new IllegalArgumentException("Invalid stack target");
         }
         push(value);
-        return;
+        return true;
       }
 
       // MARK: POP
@@ -546,7 +546,7 @@ public class CPU {
           default:
             throw new IllegalArgumentException("Invalid stack target");
         }
-        return;
+        return true;
       }
 
       // MARK: CALL
@@ -555,7 +555,7 @@ public class CPU {
         boolean condition = testJumpCondition(test);
         int pc = call(condition);
         this.pc = pc - 3; // 共通処理としてCALL命令のバイト数分進められるため，それを考慮して引く
-        return;
+        return true;
       }
 
       // MARK: RET
@@ -564,14 +564,14 @@ public class CPU {
         boolean condition = testJumpCondition(test);
         int pc = return_(condition); // return_メソッドは条件に基づいてPCを返す
         this.pc = pc - 1; // 共通処理としてRET命令のバイト数分進められるため，それを考慮して引く
-        return;
+        return true;
       }
 
       case RETI: {
         // TODO 未実装
         // this.interruptMasterEnable = true;
         // return pop();
-        return;
+        return true;
       }
 
       case RST: {
@@ -579,37 +579,37 @@ public class CPU {
         // Integer vector = instruction.getImmediateValue();
         // push(overflowingAdd(this.pc, 1).value);
         // return vector;
-        return;
+        return true;
       }
 
       // MARK: NOP
       case NOP: {
-        return;
+        return true;
       }
 
       // MARK: HALT
       case HALT: {
         this.halted = true;
-        return;
+        return true;
       }
 
       // MARK: STOP
       case STOP: {
         // TODO 未実装
-        return;
+        return true;
       }
 
       // MARK: DI, EI
       case DI: {
         // TODO 未実装
         // this.interruptMasterEnable = false;
-        return;
+        return true;
       }
 
       case EI: {
         // TODO 未実装
         // this.interruptMasterEnable = true;
-        return;
+        return true;
       }
 
       default:
@@ -617,9 +617,243 @@ public class CPU {
         throw new IllegalArgumentException("Unimplemented instruction: " + instruction.getType());
     }
   }
+
+  // MARK: *** step() ***
+  public void step() {
+    if (this.halted) {
+      // HALT状態では命令を実行せずにPCを進める
+      return;
+    }
+    
+    // プログラムカウンタから命令を取得
+    int instructionByte = this.bus.readByte(this.pc);
+
+    // プレフィックス命令か判別
+    boolean isPrefixed = instructionByte == 0xCB;
+
+    if (isPrefixed) {
+      // プレフィックス命令の場合、次のバイトを取得
+      instructionByte = this.bus.readByte(this.pc + 1);
+    }
+
+    // 命令をデコード
+    Instruction instruction = Instruction.fromByte(instructionByte, isPrefixed);
+
+    if (instruction != null && instruction.isValid()) {
+      // 命令を実行，実行されたかどうかを取得 (CALL / JR / RET など)
+      boolean condition = execute(instruction);
+      if (condition) {
+        this.pc += InstructionLengthUtil.getInstructionLength(instructionByte, isPrefixed);
+      }
+
+      int cycles = InstructionLengthUtil.getInstructionCycles(instructionByte, isPrefixed, condition);
+
+
+      log("Cycles taken: " + cycles);
+    } else {
+      // Handle invalid instruction
+      throw new IllegalArgumentException("Invalid instruction: " + String.format("%02X", instructionByte) + " isPrefixed: " + isPrefixed);
+    }
+  }
+
+  // MARK: *** 命令関数 ***
+
+  // MARK: add()
+  int addA(int value) {
+    OverflowingAddResult result = overflowingAdd(this.registers.a, value);
+
+    this.registers.f.zero = result.value == 0x00;
+    this.registers.f.subtract = false;
+    this.registers.f.halfCarry = ((this.registers.a & 0x0F) + (value & 0x0F)) > 0x0F;
+    this.registers.f.carry = result.overflow;
+    return result.value;
+  }
+
+  int addHL(int value) {
+    int hl = this.registers.get_hl();
+    int result = overflowingAdd(hl, value).value;
+    boolean overflow = overflowingAdd(hl, value).overflow;
+
+    this.registers.f.subtract = false;
+    this.registers.f.halfCarry = ((hl & 0x0FFF) + (value & 0x0FFF)) > 0x0FFF;
+    this.registers.f.carry = overflow;
+
+    return result & 0xFFFF;
+  }
+
+  int addSP(int value) {
+    // 16ビット演算を確実に行うため、直接計算
+    int result = (this.sp + value) & 0xFFFF;
+    
+    // フラグを設定（zeroとsubtractはADDSP命令では常にfalse）
+    this.registers.f.zero = false;
+    this.registers.f.subtract = false;
+    this.registers.f.halfCarry = (this.sp & 0x0F) + (value & 0x0F) > 0x0F;
+    this.registers.f.carry = (this.sp & 0xFF) + (value & 0xFF) > 0xFF;
+    
+    return result;
+  }
+
+  int addWithCarry(int value, int carry) {
+    // キャリーを含めて一度に計算
+    int result = this.registers.a + value + carry;
+    
+    // フラグ設定
+    this.registers.f.zero = (result & 0xFF) == 0;
+    this.registers.f.subtract = false;
+    this.registers.f.halfCarry = ((this.registers.a & 0x0F) + (value & 0x0F) + carry) > 0x0F;
+    this.registers.f.carry = result > 0xFF;
+    
+    return result & 0xFF;
+  }
   
-  // MARK: ヘルパー関数群
+  // MARK: subtract()
+  int subtract(int value) {
+    this.registers.f.zero = this.registers.a == value;
+    this.registers.f.subtract = true;
+    this.registers.f.halfCarry = (this.registers.a & 0x0F) < (value & 0x0F);
+    this.registers.f.carry = this.registers.a < value;
+    return (this.registers.a - value) & 0xFF;
+  }
   
+  int subtractWithCarry(int value, int carry) {
+    int total = this.registers.a - value - carry;
+    this.registers.f.zero = (total & 0xFF) == 0;
+    this.registers.f.subtract = true;
+    this.registers.f.halfCarry = ((this.registers.a & 0x0F) - (value & 0x0F) - carry) < 0;
+    this.registers.f.carry = total < 0;
+    return total & 0xFF;
+  }
+  
+  // MARK: bitwise operations
+  int and(int value) {
+    int result = this.registers.a & value;
+    this.registers.f.zero = result == 0;
+    this.registers.f.subtract = false;
+    this.registers.f.halfCarry = true;
+    this.registers.f.carry = false;
+    return result;
+  }
+  
+  int or(int value) {
+    int result = this.registers.a | value;
+    this.registers.f.zero = (result & 0xFF) == 0x00;
+    this.registers.f.subtract = false;
+    this.registers.f.halfCarry = false;
+    this.registers.f.carry = false;
+    return result;
+  }
+  
+  int xor(int value) {
+    int result = this.registers.a ^ value;
+    this.registers.f.zero = (result & 0xFF) == 0x00;
+    this.registers.f.subtract = false;
+    this.registers.f.halfCarry = false;
+    this.registers.f.carry = false;
+    return result;
+  }
+  
+  // MARK: cp()
+  void cp(int value) {
+    this.registers.f.zero = this.registers.a == value;
+    this.registers.f.subtract = true;
+    this.registers.f.halfCarry = (this.registers.a & 0x0F) < (value & 0x0F);
+    this.registers.f.carry = this.registers.a < value;
+  }
+  
+  // MARK: increment/decrement
+  int increment(int value) {
+    int result = (value + 1) & 0xFF;
+    this.registers.f.zero = result == 0;
+    this.registers.f.subtract = false;
+    this.registers.f.halfCarry = (value & 0x0F) == 0x0F;
+    return result;
+  }
+  
+  int decrement(int value) {
+    int result = wrappingSub(value, 1) & 0xFF;
+    this.registers.f.zero = result == 0;
+    this.registers.f.subtract = true;
+    this.registers.f.halfCarry = (value & 0x0F) == 0x00;
+    return result;
+  }
+
+  // MARK: jump()
+  int jump(boolean condition) {
+    if (condition) {
+      return readNextWord(); // 次のワード(2byte)を読み込む
+    } else {
+      return overflowingAdd(this.pc, 3).value; // 3バイト足す
+    }
+  }
+ 
+  // MARK: jumpHL()
+  int jumpHL() {
+    return this.bus.readByte(this.registers.get_hl()); // HLレジスタの値がジャンプ先アドレス
+  }
+  
+  // MARK: jumpRelative()
+  int jumpRelative(boolean condition) {
+    if (condition) {
+      int offset = readNextByte();
+      // 符号付き8ビットとして扱う
+      if ((offset & 0x80) != 0) offset -= 256;
+      return wrappingAdd16(wrappingAdd16(this.pc, 2), offset);
+    } else {
+      return wrappingAdd16(this.pc, 2); // 2バイト足す
+    }
+  }
+
+  // MARK: push()
+  void push(int value) {
+    this.sp = wrappingSub16(this.sp, 1); // スタックポインタを1バイト分減らす
+    this.bus.writeByte(this.sp, ((value & 0xFF00) >> 8)); // スタックに上位バイトを書き込む
+    this.sp = wrappingSub16(this.sp, 1); // スタックポインタを1バイト分減らす
+    this.bus.writeByte(this.sp, (value & 0x00FF)); // スタックに下位バイトを書き込む
+  }
+
+  // MARK: pop()
+  int pop() {
+    int lsb = this.bus.readByte(this.sp); // スタックから下位バイトを読み込む
+    this.sp = overflowingAdd(this.sp, 1).value; // スタックポインタを1バイト分増やす
+    int msb = this.bus.readByte(this.sp); // スタックから上位バイトを読み込む
+    this.sp = overflowingAdd(this.sp, 1).value; // スタックポインタを1バイト分増やす
+    return ((msb << 8) | lsb); // リトルエンディアンで結合
+  }
+
+  // MARK: call()
+  int call(boolean condition) {
+    int nextPc = overflowingAdd(this.pc, 3).value; // 次のPCのアドレスを計算
+    if (condition) {
+      push(nextPc); // 次のPCをスタックにプッシュ
+      return readNextWord(); // 次のワードを読み込む
+    } else {
+      return nextPc;
+    }
+  }
+
+  // MARK: ret()
+  int return_(boolean condition) {
+    if (condition) {
+      return pop(); // スタックからポップしてPCを更新
+    } else {
+      return overflowingAdd(this.pc, 1).value; // PCを1バイト進める
+    }
+  }
+
+  // MARK: readNextByte()
+  int readNextByte() {
+    return this.bus.readByte(pc+1);
+  }
+
+  int readNextWord() {
+    int leastSignificantByte = this.bus.readByte(this.pc + 1);
+    int mostSignificantByte = this.bus.readByte(this.pc + 2);
+    return (mostSignificantByte << 8) | leastSignificantByte; // リトルエンディアンで結合
+  }
+
+    // MARK: ヘルパー関数群
+
   // MARK: get ArithmeticTarget
   private int getValueForArithmeticTarget(ArithmeticTarget target) {
     // アドレスから算術演算のターゲットの値を取得
@@ -894,235 +1128,6 @@ public class CPU {
       default:
         throw new IllegalArgumentException("Invalid jump test: " + test);
     }
-  }
-
-
-  // MARK: add()
-  int addA(int value) {
-    OverflowingAddResult result = overflowingAdd(this.registers.a, value);
-
-    this.registers.f.zero = result.value == 0x00;
-    this.registers.f.subtract = false;
-    this.registers.f.halfCarry = ((this.registers.a & 0x0F) + (value & 0x0F)) > 0x0F;
-    this.registers.f.carry = result.overflow;
-    return result.value;
-  }
-
-  int addHL(int value) {
-    int hl = this.registers.get_hl();
-    int result = overflowingAdd(hl, value).value;
-    boolean overflow = overflowingAdd(hl, value).overflow;
-
-    this.registers.f.subtract = false;
-    this.registers.f.halfCarry = ((hl & 0x0FFF) + (value & 0x0FFF)) > 0x0FFF;
-    this.registers.f.carry = overflow;
-
-    return result & 0xFFFF;
-  }
-
-  int addSP(int value) {
-    // 16ビット演算を確実に行うため、直接計算
-    int result = (this.sp + value) & 0xFFFF;
-    
-    // フラグを設定（zeroとsubtractはADDSP命令では常にfalse）
-    this.registers.f.zero = false;
-    this.registers.f.subtract = false;
-    this.registers.f.halfCarry = (this.sp & 0x0F) + (value & 0x0F) > 0x0F;
-    this.registers.f.carry = (this.sp & 0xFF) + (value & 0xFF) > 0xFF;
-    
-    return result;
-  }
-
-  int addWithCarry(int value, int carry) {
-    // キャリーを含めて一度に計算
-    int result = this.registers.a + value + carry;
-    
-    // フラグ設定
-    this.registers.f.zero = (result & 0xFF) == 0;
-    this.registers.f.subtract = false;
-    this.registers.f.halfCarry = ((this.registers.a & 0x0F) + (value & 0x0F) + carry) > 0x0F;
-    this.registers.f.carry = result > 0xFF;
-    
-    return result & 0xFF;
-  }
-  
-  // MARK: subtract()
-  int subtract(int value) {
-    this.registers.f.zero = this.registers.a == value;
-    this.registers.f.subtract = true;
-    this.registers.f.halfCarry = (this.registers.a & 0x0F) < (value & 0x0F);
-    this.registers.f.carry = this.registers.a < value;
-    return (this.registers.a - value) & 0xFF;
-  }
-  
-  int subtractWithCarry(int value, int carry) {
-    int total = this.registers.a - value - carry;
-    this.registers.f.zero = (total & 0xFF) == 0;
-    this.registers.f.subtract = true;
-    this.registers.f.halfCarry = ((this.registers.a & 0x0F) - (value & 0x0F) - carry) < 0;
-    this.registers.f.carry = total < 0;
-    return total & 0xFF;
-  }
-  
-  // MARK: bitwise operations
-  int and(int value) {
-    int result = this.registers.a & value;
-    this.registers.f.zero = result == 0;
-    this.registers.f.subtract = false;
-    this.registers.f.halfCarry = true;
-    this.registers.f.carry = false;
-    return result;
-  }
-  
-  int or(int value) {
-    int result = this.registers.a | value;
-    this.registers.f.zero = (result & 0xFF) == 0x00;
-    this.registers.f.subtract = false;
-    this.registers.f.halfCarry = false;
-    this.registers.f.carry = false;
-    return result;
-  }
-  
-  int xor(int value) {
-    int result = this.registers.a ^ value;
-    this.registers.f.zero = (result & 0xFF) == 0x00;
-    this.registers.f.subtract = false;
-    this.registers.f.halfCarry = false;
-    this.registers.f.carry = false;
-    return result;
-  }
-  
-  // MARK: cp()
-  void cp(int value) {
-    this.registers.f.zero = this.registers.a == value;
-    this.registers.f.subtract = true;
-    this.registers.f.halfCarry = (this.registers.a & 0x0F) < (value & 0x0F);
-    this.registers.f.carry = this.registers.a < value;
-  }
-  
-  // MARK: increment/decrement
-  int increment(int value) {
-    int result = (value + 1) & 0xFF;
-    this.registers.f.zero = result == 0;
-    this.registers.f.subtract = false;
-    this.registers.f.halfCarry = (value & 0x0F) == 0x0F;
-    return result;
-  }
-  
-  int decrement(int value) {
-    int result = wrappingSub(value, 1) & 0xFF;
-    this.registers.f.zero = result == 0;
-    this.registers.f.subtract = true;
-    this.registers.f.halfCarry = (value & 0x0F) == 0x00;
-    return result;
-  }
-
-
-  // MARK: step実行
-  public void step() {
-    if (this.halted) {
-      // HALT状態では命令を実行せずにPCを進める
-      return;
-    }
-    
-    // プログラムカウンタから命令を取得
-    int instructionByte = this.bus.readByte(this.pc);
-
-    // プレフィックス命令か判別
-    boolean isPrefixed = instructionByte == 0xCB;
-
-    if (isPrefixed) {
-      // プレフィックス命令の場合、次のバイトを取得
-      instructionByte = this.bus.readByte(this.pc + 1);
-    }
-
-    // 命令をデコード
-    Instruction instruction = Instruction.fromByte(instructionByte, isPrefixed);
-
-    if (instruction != null && instruction.isValid()) {
-      // Execute the instruction
-      int cycles = execute(instruction);
-      this.pc += InstructionLengthUtil.getInstructionLength(instructionByte, isPrefixed);
-
-      log("Cycles taken: " + cycles);
-    } else {
-      // Handle invalid instruction
-      throw new IllegalArgumentException("Invalid instruction: " + String.format("%02X", instructionByte) + " isPrefixed: " + isPrefixed);
-    }
-  }
-
-  // MARK: jump()
-  int jump(boolean condition) {
-    if (condition) {
-      return readNextWord(); // 次のワード(2byte)を読み込む
-    } else {
-      return overflowingAdd(this.pc, 3).value; // 3バイト足す
-    }
-  }
- 
-  // MARK: jumpHL()
-  int jumpHL() {
-    return this.bus.readByte(this.registers.get_hl()); // HLレジスタの値がジャンプ先アドレス
-  }
-  
-  // MARK: jumpRelative()
-  int jumpRelative(boolean condition) {
-    if (condition) {
-      int offset = readNextByte();
-      // 符号付き8ビットとして扱う
-      if ((offset & 0x80) != 0) offset -= 256;
-      return wrappingAdd16(wrappingAdd16(this.pc, 2), offset);
-    } else {
-      return wrappingAdd16(this.pc, 2); // 2バイト足す
-    }
-  }
-
-  // MARK: push()
-  void push(int value) {
-    this.sp = wrappingSub16(this.sp, 1); // スタックポインタを1バイト分減らす
-    this.bus.writeByte(this.sp, ((value & 0xFF00) >> 8)); // スタックに上位バイトを書き込む
-    this.sp = wrappingSub16(this.sp, 1); // スタックポインタを1バイト分減らす
-    this.bus.writeByte(this.sp, (value & 0x00FF)); // スタックに下位バイトを書き込む
-  }
-
-  // MARK: pop()
-  int pop() {
-    int lsb = this.bus.readByte(this.sp); // スタックから下位バイトを読み込む
-    this.sp = overflowingAdd(this.sp, 1).value; // スタックポインタを1バイト分増やす
-    int msb = this.bus.readByte(this.sp); // スタックから上位バイトを読み込む
-    this.sp = overflowingAdd(this.sp, 1).value; // スタックポインタを1バイト分増やす
-    return ((msb << 8) | lsb); // リトルエンディアンで結合
-  }
-
-  // MARK: call()
-  int call(boolean condition) {
-    int nextPc = overflowingAdd(this.pc, 3).value; // 次のPCのアドレスを計算
-    if (condition) {
-      push(nextPc); // 次のPCをスタックにプッシュ
-      return readNextWord(); // 次のワードを読み込む
-    } else {
-      return nextPc;
-    }
-  }
-
-  // MARK: ret()
-  int return_(boolean condition) {
-    if (condition) {
-      return pop(); // スタックからポップしてPCを更新
-    } else {
-      return overflowingAdd(this.pc, 1).value; // PCを1バイト進める
-    }
-  }
-
-  // MARK: readNextByte()
-  int readNextByte() {
-    return this.bus.readByte(pc+1);
-  }
-
-  int readNextWord() {
-    int leastSignificantByte = this.bus.readByte(this.pc + 1);
-    int mostSignificantByte = this.bus.readByte(this.pc + 2);
-    return (mostSignificantByte << 8) | leastSignificantByte; // リトルエンディアンで結合
   }
 
   public void log(String message) {
