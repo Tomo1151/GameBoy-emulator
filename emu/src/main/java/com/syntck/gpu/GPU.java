@@ -70,9 +70,10 @@ public class GPU {
     // this.frameBuffer を全部書き換える
     for (int addr = 0; addr < this.frameBuffer.length; addr++) {
       int vramAddr = addr - VRAM_BEGIN; // タイルのインデックスが保存されている先頭アドレスをVRAMのアドレスに変換
+      int index = vramAddr - 0x1800;
       Tile tile = this.tiles[this.vram[vramAddr]]; // タイルを取得
-      int screenX = (vramAddr % 32) * Tile.TILE_LENGTH; // タイルのX座標の始点を計算
-      int screenY = (vramAddr / 32) * Tile.TILE_LENGTH; // タイルのY座標の始点を計算
+      int screenX = ((index) % 32) * Tile.TILE_LENGTH; // タイルのX座標の始点を計算
+      int screenY = ((index) / 32) * Tile.TILE_LENGTH; // タイルのY座標の始点を計算
 
 
       for (int tileX = 0; tileX < Tile.TILE_LENGTH; tileX++) {

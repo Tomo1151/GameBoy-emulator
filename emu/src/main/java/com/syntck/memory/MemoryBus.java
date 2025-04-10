@@ -10,6 +10,7 @@ public class MemoryBus {
 
   public MemoryBus(CPU cpu) {
     this.cpu = cpu; // Initialize the CPU instance
+    this.gpu = new GPU(); // Initialize the GPU instance
   }
 
   public int readByte(int address) {

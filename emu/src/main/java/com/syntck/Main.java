@@ -2,6 +2,10 @@ package com.syntck;
 
 import java.awt.Graphics;
 import javax.swing.JFrame;
+
+import com.syntck.cartridge.Cartridge;
+import com.syntck.cpu.CPU;
+
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 
@@ -9,6 +13,9 @@ public class Main {
   public static void main(String[] args) {
     System.out.println("Hello, World!");
     GameBoyFrame gameBoyFrame = new GameBoyFrame();
+
+    Cartridge cartridge = new Cartridge("emu/src/main/java/com/syntck/rom/test/cpu_instrs.gb");
+    cartridge.dump(0x0104, 0x0133);
   }
 }
 
