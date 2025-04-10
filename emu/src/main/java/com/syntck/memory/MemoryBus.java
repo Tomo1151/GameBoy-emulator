@@ -5,7 +5,7 @@ import com.syntck.cartridge.Cartridge;
 
 public class MemoryBus {
   public static final int MEMORY_SIZE = 0xFFFF; // 64KB of memory
-  public int[] memory = new int[MEMORY_SIZE]; // Memory array
+  public int[] memory = new int[MEMORY_SIZE+1]; // Memory array
   public CPU cpu; // CPU instance
   public GPU gpu; // GPU instance
   public Cartridge cartridge; // Cartridge instance
@@ -17,7 +17,7 @@ public class MemoryBus {
   }
 
   public int readByte(int address) {
-    if (address < 0 || address >= MEMORY_SIZE) {
+    if (address < 0 || address > MEMORY_SIZE) {
       throw new IllegalArgumentException("Address out of bounds: " + String.format("0x%04X", address));
     }
 
@@ -43,7 +43,7 @@ public class MemoryBus {
   }
 
   public void writeByte(int address, int value) {
-    if (address < 0 || address >= MEMORY_SIZE) {
+    if (address < 0 || address > MEMORY_SIZE) {
       throw new IllegalArgumentException("Address out of bounds: " + String.format("0x%04X", address));
     }
 
@@ -65,7 +65,7 @@ public class MemoryBus {
   }
 
   public void writeWord(int address, int value) {
-    if (address < 0 || address >= MEMORY_SIZE - 1) {
+    if (address < 0 || address > MEMORY_SIZE - 1) {
       throw new IllegalArgumentException("Address out of bounds: " + String.format("0x%04X", address));
     }
     memory[address] = value & 0xFF; // Write the lower byte
@@ -73,7 +73,7 @@ public class MemoryBus {
   }
 
   public int readWord(int address) {
-    if (address < 0 || address >= MEMORY_SIZE - 1) {
+    if (address < 0 || address > MEMORY_SIZE - 1) {
       throw new IllegalArgumentException("Address out of bounds: " + String.format("0x%04X", address));
     }
     return (memory[address] & 0xFF) | ((memory[address + 1] & 0xFF) << 8); // Read a word from the specified address

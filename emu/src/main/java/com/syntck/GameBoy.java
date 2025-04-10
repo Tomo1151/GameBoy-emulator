@@ -28,11 +28,11 @@ public class GameBoy {
   public void run() {
     while (true) {
       this.cpu.step();
-      
-      if (cpu.bus.gpu.ly == 144) {
-        int[] frames = cpu.bus.gpu.getFrames();
-        gameBoyFrame.repaint(this.gameBoyFrame.getGraphics(), frames);
-      }
+
+      // if (cpu.bus.gpu.ly == 144) {
+        // int[] frames = cpu.bus.gpu.getFrames();
+        // gameBoyFrame.repaint(this.gameBoyFrame.getGraphics(), frames);
+      // }
     }
   }
 }

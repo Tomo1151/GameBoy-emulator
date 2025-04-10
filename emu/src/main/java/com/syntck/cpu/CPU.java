@@ -14,23 +14,23 @@ public class CPU {
   public int cycles; // サイクル数
   public boolean interruptMasterEnable; // 割り込み許可フラグ
   private boolean halted; // HALTフラグ
+  private boolean debug = true;
 
   public CPU() {
     this.registers = new Registers();
     this.bus = new MemoryBus(this, null); // Cartridgeはnullで初期化
     this.pc = 0x0100; // プログラムカウンタの初期値
     this.sp = 0xFFFE; // スタックポインタの初期値
-    this.interruptMasterEnable = false;
+    this.interruptMasterEnable = true;
     this.halted = false;
   }
 
   public CPU(Cartridge cartridge) {
     this.registers = new Registers();
-    this.registers.f = new FlagsRegister();
     this.bus = new MemoryBus(this, cartridge);
-    this.pc = 0x0000; // プログラムカウンタの初期値
-    this.sp = 0xFFFF; // スタックポインタの初期値
-    this.interruptMasterEnable = false;
+    this.pc = 0x0100; // プログラムカウンタの初期値
+    this.sp = 0xFFFE; // スタックポインタの初期値
+    this.interruptMasterEnable = true;
     this.halted = false;
 
     this.bus.writeByte(0xFF50, 1);
@@ -150,6 +150,7 @@ public class CPU {
         ArithmeticTarget target = instruction.getArithmeticTarget();
         int value = getValueForArithmeticTarget(target);
         cp(value); // CPは結果を保存しない
+        // System.out.println("CP " + target + " " + String.format("$%04X", value));
         return true;
       }
       
@@ -492,6 +493,7 @@ public class CPU {
         LoadTarget target = instruction.getLoadTarget();
         LoadSource source = instruction.getLoadSource();
         int sourceValue = getValueForLoadSource(source);
+        System.out.println("LD: " + target + ", " + source + ", " + String.format("$%04X",sourceValue));
         setValueForLoadTarget(target, sourceValue, source == LoadSource.A);
         if (target == LoadTarget.HLI_ADDR || source == LoadSource.HLI_ADDR) {
           this.registers.set_hl(wrappingAdd(this.registers.get_hl(), 1));
@@ -553,7 +555,12 @@ public class CPU {
             this.registers.set_hl(value);
             break;
           case AF:
+            // POP AF はフラグを書き換える
             this.registers.set_af(value);
+            this.registers.f.zero = (value & 0x80) != 0;
+            this.registers.f.subtract = (value & 0x40) != 0;
+            this.registers.f.halfCarry = (value & 0x20) != 0;
+            this.registers.f.carry = (value & 0x10) != 0;
             break;
           default:
             throw new IllegalArgumentException("Invalid stack target");
@@ -587,10 +594,10 @@ public class CPU {
       }
 
       case RST: {
-        // TODO 未実装
-        // Integer vector = instruction.getImmediateValue();
-        // push(overflowingAdd(this.pc, 1).value);
-        // return vector;
+        // RST命令は、指定されたアドレスにPCを保存し、指定されたアドレスにジャンプする
+        // 0x00, 0x08, 0x10, 0x18, 0x20, 0x28, 0x30, 0x38 のいずれか
+        int address = instruction.getImmediateValue();
+        this.pc = Math.max(wrappingSub(address, 1), 0x0000);
         return true;
       }
 
@@ -613,14 +620,14 @@ public class CPU {
 
       // MARK: DI, EI
       case DI: {
-        // TODO 未実装
-        // this.interruptMasterEnable = false;
+        // 割り込みを無効にする命令
+        this.interruptMasterEnable = false;
         return true;
       }
 
       case EI: {
-        // TODO 未実装
-        // this.interruptMasterEnable = true;
+        // 割り込みを有効にする命令
+        this.interruptMasterEnable = true;
         return true;
       }
 
@@ -639,6 +646,7 @@ public class CPU {
     
     // プログラムカウンタから命令を取得
     int instructionByte = this.bus.readByte(this.pc);
+    int prevPC = this.pc;
 
     // プレフィックス命令か判別
     boolean isPrefixed = instructionByte == 0xCB;
@@ -648,8 +656,10 @@ public class CPU {
       instructionByte = this.bus.readByte(this.pc + 1);
     }
 
+    
     // 命令をデコード
     Instruction instruction = Instruction.fromByte(instructionByte, isPrefixed);
+    System.out.println("PC: " + String.format("$%04X", this.pc) + " SP: " + String.format("$%04X", this.sp) + " isPrefixed: " + isPrefixed + " Instruction: " + String.format("%04X", instructionByte) + " " + instruction.getType() + " " + (instruction.operand0) + " " + (instruction.operand1));
 
     if (instruction != null && instruction.isValid()) {
       // 命令を実行，実行されたかどうかを取得 (CALL / JR / RET など)
@@ -661,8 +671,11 @@ public class CPU {
       int cycles = InstructionLengthUtil.getInstructionCycles(instructionByte, isPrefixed, condition);
 
       // updateTimers(cycles);
-      this.bus.gpu.update(cycles);
+      // this.bus.gpu.update(cycles);
       // handleInterrupts();
+
+      // Logging
+      System.out.println(String.format("PC updated: +%d = 0x%04X", this.pc - prevPC, this.pc) + String.format(" SP updated: 0x%4X", this.sp) + " Cycles: " + cycles + "\n");
 
     } else {
       // Handle invalid instruction
@@ -795,7 +808,9 @@ public class CPU {
   // MARK: jump()
   int jump(boolean condition) {
     if (condition) {
-      return readNextWord(); // 次のワード(2byte)を読み込む
+      int value = readNextWord();
+      System.out.println("Jump to: " + String.format("$%04X", value));
+      return value; // 次のワード(2byte)を読み込む
     } else {
       return overflowingAdd(this.pc, 3).value; // 3バイト足す
     }
@@ -880,7 +895,11 @@ public class CPU {
       case H: return this.registers.h;
       case L: return this.registers.l;
       case HL_ADDR: return this.bus.readByte(this.registers.get_hl());
-      case D8: return readNextByte();
+      case D8: {
+        int value = readNextByte();
+        System.out.println("Compare A with: " + String.format("$%04X", value));
+        return value;
+      }
       default:
         throw new IllegalArgumentException("Invalid arithmetic target: " + target);
     }

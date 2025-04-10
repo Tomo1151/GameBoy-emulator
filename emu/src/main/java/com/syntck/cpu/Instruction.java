@@ -2,8 +2,8 @@ package com.syntck.cpu;
 
 public class Instruction {
   private final InstructionType type;
-  private final Object operand0;  // 命令ごとの第1オペランド
-  private final Object operand1;  // 命令ごとの第2オペランド（必要な場合）
+  public final Object operand0;  // 命令ごとの第1オペランド
+  public final Object operand1;  // 命令ごとの第2オペランド（必要な場合）
 
   private Instruction(InstructionType type, Object operand0, Object operand1) {
     this.type = type;
