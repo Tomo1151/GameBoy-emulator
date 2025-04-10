@@ -10,6 +10,7 @@ public class CPU {
   public MemoryBus bus; // メモリバス
   public int pc; // プログラムカウンタ
   public int sp; // スタックポインタ
+  public int cycles; // サイクル数
   public boolean interruptMasterEnable; // 割り込み許可フラグ
   private boolean halted; // HALTフラグ
 
@@ -34,7 +35,7 @@ public class CPU {
 
   // MARK: 命令の実行
   // 引数に与えられた命令を実行し、次のPCを返す
-  void execute(Instruction instruction) throws IllegalArgumentException {
+  int execute(Instruction instruction) throws IllegalArgumentException {
     switch (instruction.getType()) {
       // MARK: ADD (A, HL, SP), ADC
       case ADD: {
@@ -1040,9 +1041,10 @@ public class CPU {
 
     if (instruction != null && instruction.isValid()) {
       // Execute the instruction
-      /*int nextPc = */execute(instruction);
+      int cycles = execute(instruction);
       this.pc += InstructionLengthUtil.getInstructionLength(instructionByte, isPrefixed);
-      // this.pc = nextPc; // PCを更新
+
+      log("Cycles taken: " + cycles);
     } else {
       // Handle invalid instruction
       throw new IllegalArgumentException("Invalid instruction: " + String.format("%02X", instructionByte) + " isPrefixed: " + isPrefixed);
