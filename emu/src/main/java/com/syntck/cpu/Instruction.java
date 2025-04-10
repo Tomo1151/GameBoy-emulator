@@ -322,34 +322,34 @@ public class Instruction {
       case 0x02: return createLD(LoadTarget.BC_ADDR, LoadSource.A);
       case 0x12: return createLD(LoadTarget.DE_ADDR, LoadSource.A);
       
-      // MARK: LD LD A,(BC) / LD A,(DE)
+      // MARK: LD A,(BC) / LD A,(DE)
       case 0x0A: return createLD(LoadTarget.A, LoadSource.BC_ADDR);
       case 0x1A: return createLD(LoadTarget.A, LoadSource.DE_ADDR);
       
-      // MARK: LD LD (HL+),A / LD (HL-),A
+      // MARK: LD (HL+),A / LD (HL-),A
       case 0x22: return createLD(LoadTarget.HLI_ADDR, LoadSource.A);
       case 0x32: return createLD(LoadTarget.HLD_ADDR, LoadSource.A);
       
-      // MARK: LD LD A,(HL+) / LD A,(HL-)
+      // MARK: LD A,(HL+) / LD A,(HL-)
       case 0x2A: return createLD(LoadTarget.A, LoadSource.HLI_ADDR);
       case 0x3A: return createLD(LoadTarget.A, LoadSource.HLD_ADDR);
 
       // MARK: LD (a16),SP
       case 0x08: return createLD(LoadTarget.A16_ADDR, LoadSource.SP);
 
-      // MARK: LD LD (a16),A / LD A,(a16)
+      // MARK: LD (a16),A / LD A,(a16)
       case 0xEA: return createLD(LoadTarget.A16_ADDR, LoadSource.A);
       case 0xFA: return createLD(LoadTarget.A, LoadSource.A16_ADDR);
       
-      // MARK: LD LDH (a8),A / LDH A,(a8)
+      // MARK: LDH (a8),A / LDH A,(a8)
       case 0xE0: return createLD(LoadTarget.FF00_A8, LoadSource.A);
       case 0xF0: return createLD(LoadTarget.A, LoadSource.FF00_A8);
       
-      // MARK: LD LDH (C),A / LDH A,(C)
+      // MARK: LDH (C),A / LDH A,(C)
       case 0xE2: return createLD(LoadTarget.FF00_C, LoadSource.A);
       case 0xF2: return createLD(LoadTarget.A, LoadSource.FF00_C);
       
-      // MARK: LD LD r,r'
+      // MARK: LD r,r'
       case 0x40: return createLD(LoadTarget.B, LoadSource.B);
       case 0x41: return createLD(LoadTarget.B, LoadSource.C);
       case 0x42: return createLD(LoadTarget.B, LoadSource.D);

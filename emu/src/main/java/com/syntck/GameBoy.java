@@ -28,7 +28,7 @@ public class GameBoy {
   public void run() {
     while (true) {
       this.cpu.step();
-
+      System.out.println("Status: " + String.format("0x%04X", this.cpu.bus.readByte(0xFF01)));
       // if (cpu.bus.gpu.ly == 144) {
         // int[] frames = cpu.bus.gpu.getFrames();
         // gameBoyFrame.repaint(this.gameBoyFrame.getGraphics(), frames);
