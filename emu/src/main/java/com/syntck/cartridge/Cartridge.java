@@ -2,6 +2,9 @@ package com.syntck.cartridge;
 
 import java.io.FileInputStream;
 
+import com.syntck.mapper.MBC1;
+import com.syntck.mapper.Mapper;
+
 public class Cartridge {
   public int[] binaryData; // ROMのバイナリデータを格納する配列
   public boolean isCGB; // CGBフラグ
@@ -10,6 +13,7 @@ public class Cartridge {
   public RomSize romSize; // ROMサイズ
   public RamSize ramSize; // RAMサイズ
   public int version; // ROMバージョン
+  public Mapper mapper; // マッパー
 
   public Cartridge(String file) {
     try (FileInputStream fis = new FileInputStream(file)) {
@@ -24,10 +28,11 @@ public class Cartridge {
 
       this.isCGB = (binaryData[0x0143] == 0xC0); // CGBフラグを取得
       this.isSGB = (binaryData[0x0146] == 0x03); // SGBフラグを取得
-      setCartridgeType(binaryData[0x0147]); // カートリッジタイプを取得
       setRomSize(binaryData[0x0148]); // ROMサイズを取得
       setRamSize(binaryData[0x0149]); // RAMサイズを取得
       this.version = binaryData[0x014C]; // ROMのバージョンを取得
+
+      setCartridgeType(binaryData[0x0147]); // カートリッジタイプを取得
 
       System.out.println("Cartridge loaded: \n" +
                          "CGB: " + this.isCGB + "\n" +
@@ -36,19 +41,19 @@ public class Cartridge {
                          "ROM Size: " + this.romSize + "\n" +
                          "RAM Size: " + this.ramSize + "\n" +
                          "Version: " + this.version);
+
     } catch (Exception e) {
       e.printStackTrace(); // エラーが発生した場合はスタックトレースを表示
     }
   }
 
   public int readByte(int address) {
-    if (address < 0 || address >= binaryData.length) {
-      throw new IllegalArgumentException("Address out of bounds: " + String.format("0x%04X", address));
-    }
-    return binaryData[address]; // 指定されたアドレスからバイトを読み取る
+    return this.mapper.readByte(address); // マッパーを使用してバイトを読み取る
   }
 
-  public void writeByte(int address, int value) {}
+  public void writeByte(int address, int value) {
+    this.mapper.writeByte(address, value);
+  }
 
   public void setRamSize(int ramSize) {
     switch (ramSize) {
@@ -122,6 +127,7 @@ public class Cartridge {
     switch (cartridgeType) {
       case 0x00:
         this.cartridgeType = CartridgeType.ROM_ONLY;
+        this.mapper = new MBC1(this.binaryData, this.romSize.getValue(), this.ramSize.getValue());
         break;
       case 0x01:
         this.cartridgeType = CartridgeType.MBC1;
