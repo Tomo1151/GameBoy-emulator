@@ -17,7 +17,15 @@ public class MemoryBus {
       throw new IllegalArgumentException("Address out of bounds: " + String.format("0x%04X", address));
     }
 
-    if (GPU.VRAM_BEGIN <= address && address <= GPU.VRAM_END) {
+    if (address == 0xFF41) {
+    return this.gpu.status.convertToInt(); // LCDステータスレジスタの値を返す
+    } else if (address == 0xFF40) {
+      return this.gpu.controls.convertToInt();
+    } else if (address == 0xFF44) {
+      return this.gpu.ly; // LYレジスタの値を返す
+    } else if (address == 0xFF45) {
+      return this.gpu.lyc; // LYCレジスタの値を返す
+    } else if (GPU.VRAM_BEGIN <= address && address <= GPU.VRAM_END) {
       return this.gpu.readVRAM(address - GPU.VRAM_BEGIN); // アドレスがVRAMの範囲内の場合、GPUから読み取る
     }
     return memory[address];
@@ -28,7 +36,15 @@ public class MemoryBus {
       throw new IllegalArgumentException("Address out of bounds: " + String.format("0x%04X", address));
     }
 
-    if (GPU.VRAM_BEGIN <= address && address <= GPU.VRAM_END) {
+    if (address == 0xFF40) {
+      this.gpu.controls.convertFromInt(value); // LCD制御レジスタに値を設定
+    } else if (address == 0xFF41) {
+      this.gpu.status.convertFromInt(value); // LCDステータスレジスタに値を設定
+    } else if (address == 0xFF45) {
+      this.gpu.lyc = value; // LYCレジスタに値を設定
+    } else if (address == 0xFF44) {
+      throw new UnsupportedOperationException("LYレジスタへの書き込みが発生しました"); // LYレジスタには書き込まない
+    } else if (GPU.VRAM_BEGIN <= address && address <= GPU.VRAM_END) {
       this.gpu.writeVRAM(address - GPU.VRAM_BEGIN, value); // アドレスがVRAMの範囲内の場合、GPUに書き込む
       return;
     }

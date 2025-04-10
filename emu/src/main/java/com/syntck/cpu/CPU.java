@@ -649,7 +649,7 @@ public class CPU {
       int cycles = InstructionLengthUtil.getInstructionCycles(instructionByte, isPrefixed, condition);
 
       // updateTimers(cycles);
-      // updateGraphics(cycles);
+      this.bus.gpu.update(cycles);
       // handleInterrupts();
 
     } else {

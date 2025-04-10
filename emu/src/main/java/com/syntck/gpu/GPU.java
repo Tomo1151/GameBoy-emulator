@@ -1,15 +1,31 @@
 package com.syntck.gpu;
 
 public class GPU {
+  public static final int SCREEN_WIDTH = 160;
+  public static final int SCREEN_HEIGHT = 144;
   public static final int VRAM_BEGIN = 0x8000;
   public static final int VRAM_END   = 0x9FFF;
   public static final int VRAM_SIZE  = VRAM_END - VRAM_BEGIN + 1;
 
+  // レジスタ
+  public int ly; // 0xFF44 LYレジスタ (現在のスキャンラインのY座標)
+  public int lyc; // 0xFF45 LYCレジスタ (LYと比較するY座標)
+  public LCDControlRegisters controls; // 0xFF40 LCD制御レジスタ (LCDの制御)
+  public LCDStatusRegisters status; // 0xFF41 LCDステータスレジスタ (LCDの状態を示すフラグ)
+
   public int[] vram = new int[VRAM_SIZE];
   public Tile[] tiles = new Tile[384];
 
-  GPU() {
+  public int[] frameBuffer = new int[SCREEN_WIDTH * SCREEN_HEIGHT];
+  private int scanlineCounter;
+
+  public GPU() {
     this.vram = new int[VRAM_SIZE];
+    this.controls = new LCDControlRegisters(); // LCD制御レジスタの初期化
+    this.status = new LCDStatusRegisters(); // LCDステータスレジスタの初期化
+    this.ly = 0; // LYレジスタの初期化
+    this.lyc = 0; // LYCレジスタの初期化
+    this.scanlineCounter = 0; // スキャンラインカウンタの初期化
     this.tiles = new Tile[384]; // 384 tiles
     for (int i = 0; i < this.vram.length; i++) {
       this.vram[i] = 0; // Initialize VRAM with 0
@@ -17,6 +33,37 @@ public class GPU {
     for (int i = 0; i < this.tiles.length; i++) {
       this.tiles[i] = new Tile(new TilePixelValue[Tile.TILE_LENGTH][Tile.TILE_LENGTH]);
     }
+  }
+
+  public void update(int cycles) {
+    // setLCDStatus();
+    // if (!isLCDEnabled) return;
+
+    this.scanlineCounter += cycles;
+
+    if (this.scanlineCounter >= 456) {
+      // 1ライン分描画された
+      this.scanlineCounter -= 456;
+
+      // LYレジスタをインクリメント
+      this.ly++;
+      int currentLine = this.ly; // 現在のラインを取得
+
+      if (currentLine == 144) {
+        // VBlank開始
+        // VBlankフラグをセット
+      } else if (currentLine < 144) {
+        // 画面描画中
+        this.drawScanline(currentLine);
+      } else if (currentLine > 153) {
+        // 1フレーム描画完了
+        this.ly = 0; // LYをリセット
+      }
+    }
+  }
+
+  private void drawScanline(int scanline) {
+
   }
 
   public int readVRAM(int address) {
