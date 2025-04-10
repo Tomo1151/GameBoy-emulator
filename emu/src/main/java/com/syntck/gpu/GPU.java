@@ -66,6 +66,25 @@ public class GPU {
 
   }
 
+  private void drawFrame() {
+    // this.frameBuffer を全部書き換える
+    for (int addr = 0; addr < this.frameBuffer.length; addr++) {
+      int index = addr - VRAM_BEGIN; // タイルのインデックスが保存されている先頭アドレスをVRAMのアドレスに変換
+      Tile tile = this.tiles[this.vram[index]]; // タイルを取得
+      int x = index % 32; // タイルのX座標を計算
+      int y = index / 32; // タイルのY座標を計算
+
+      if (x > 160 || y > 144) continue; // 画面外のタイルは無視
+
+      for (int tileX = 0; tileX < Tile.TILE_LENGTH; tileX++) {
+        for (int tileY = 0; tileY < Tile.TILE_LENGTH; tileY++) {
+          TilePixelValue pixel = tile.pixels[tileY][tileX]; // タイルのピクセル値を取得
+          this.frameBuffer[tileY * SCREEN_WIDTH + tileX] = pixel.ordinal(); // ピクセル値をフレームバッファに書き込む
+        }
+      }
+    }
+  }
+
   public int readVRAM(int address) {
     return this.vram[address];
   }
