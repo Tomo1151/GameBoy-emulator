@@ -12,6 +12,7 @@ public class GPU {
   public int lyc; // 0xFF45 LYCレジスタ (LYと比較するY座標)
   public LCDControlRegisters controls; // 0xFF40 LCD制御レジスタ (LCDの制御)
   public LCDStatusRegisters status; // 0xFF41 LCDステータスレジスタ (LCDの状態を示すフラグ)
+  public boolean frameUpdated;
 
   public int[] vram = new int[VRAM_SIZE];
   public Tile[] tiles = new Tile[384];
@@ -35,7 +36,7 @@ public class GPU {
     }
   }
 
-  public void update(int cycles) {
+  public boolean update(int cycles) {
     // setLCDStatus();
     // if (!isLCDEnabled) return;
 
@@ -56,11 +57,14 @@ public class GPU {
       } else if (currentLine < 144) {
         // 画面描画中
         this.drawScanline(currentLine);
+        this.frameUpdated = true; // フレームが更新されたことを示すフラグをセット
+        return true;
       } else if (currentLine > 153) {
         // 1フレーム描画完了
         this.ly = 0; // LYをリセット
       }
     }
+    return false;
   }
 
   private void drawScanline(int scanline) {

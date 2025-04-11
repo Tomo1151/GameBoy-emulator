@@ -71,14 +71,15 @@ public class FlagsRegister {
   }
 
   public void dump() {
-    System.out.println("Flags Register:");
-    System.out.println("  Zero: " + (zero ? "1" : "0"));
-    System.out.println("  Subtract: " + (subtract ? "1" : "0"));
-    System.out.println("  Half Carry: " + (halfCarry ? "1" : "0"));
-    System.out.println("  Carry: " + (carry ? "1" : "0"));
-    System.out.println("  Value: " + String.format("0x%04X", convertToInt(this)));
-    System.out.println("  Value (binary): " + String.format("%16s", Integer.toBinaryString(convertToInt(this))).replace(' ', '0'));
-    System.out.println("  Value (hex): " + String.format("0x%04X", convertToInt(this)));
-    System.out.println("  Value (decimal): " + convertToInt(this));
+    System.out.println("Z: " + (zero ? "1" : "0") + " N: " + (subtract ? "1" : "0") + " H: " + (halfCarry ? "1" : "0") + " C: " + (carry ? "1" : "0"));
+    // System.out.println("Flags Register:");
+    // System.out.println("  Zero: " + (zero ? "1" : "0"));
+    // System.out.println("  Subtract: " + (subtract ? "1" : "0"));
+    // System.out.println("  Half Carry: " + (halfCarry ? "1" : "0"));
+    // System.out.println("  Carry: " + (carry ? "1" : "0"));
+    // System.out.println("  Value: " + String.format("0x%04X", convertToInt(this)));
+    // System.out.println("  Value (binary): " + String.format("%16s", Integer.toBinaryString(convertToInt(this))).replace(' ', '0'));
+    // System.out.println("  Value (hex): " + String.format("0x%04X", convertToInt(this)));
+    // System.out.println("  Value (decimal): " + convertToInt(this));
   }
 }

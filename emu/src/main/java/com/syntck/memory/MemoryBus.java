@@ -25,7 +25,7 @@ public class MemoryBus {
     if (this.cartridge == null) return memory[address];
     if (address == 0xFF50) return memory[address];
 
-    if (0x0000 <= address && address <= 0x8000) {
+    if (0x0000 <= address && address <= 0x7FFF) {
       return this.cartridge.readByte(address); // Read from the cartridge if address is in ROM range
     }
     if (address == 0xFF41) {
@@ -33,6 +33,7 @@ public class MemoryBus {
     } else if (address == 0xFF40) {
       return this.gpu.controls.convertToInt();
     } else if (address == 0xFF44) {
+      // if (this.cpu.debug) System.out.println("LYレジスタへの読み取りが発生しました" + String.format("- 0x%04X", this.gpu.ly)); // LYレジスタは読み取らない
       return this.gpu.ly; // LYレジスタの値を返す
     } else if (address == 0xFF45) {
       return this.gpu.lyc; // LYCレジスタの値を返す
@@ -49,6 +50,20 @@ public class MemoryBus {
 
     if (address == 0xFF01) {
       System.out.print((char) value); // 0xFF01はコンソールに出力する
+    }
+
+    // タイマーコントロール
+    if (address == 0xFF07) {
+      int currentFreq = this.memory[0xFF07] & 0x03;
+      int newFreq = value & 0x03;
+      if (currentFreq != newFreq) {
+        this.cpu.timerCounter = 0;
+      }
+    }
+
+    // DIVカウンタ
+    if (address == 0xFF04) {
+      this.memory[address] = 0;
     }
 
     if (address == 0xFF50) this.memory[address] = value; // 0xFF50は無視する
@@ -72,15 +87,15 @@ public class MemoryBus {
     if (address < 0 || address > MEMORY_SIZE - 1) {
       throw new IllegalArgumentException("Address out of bounds: " + String.format("0x%04X", address));
     }
-    memory[address] = value & 0xFF; // Write the lower byte
-    memory[address + 1] = (value >> 8) & 0xFF; // Write the upper byte
+    writeByte(address, (value & 0xFF)); // Write the lower byte
+    writeByte(address + 1, (value >> 8));
   }
 
   public int readWord(int address) {
     if (address < 0 || address > MEMORY_SIZE - 1) {
       throw new IllegalArgumentException("Address out of bounds: " + String.format("0x%04X", address));
     }
-    return (memory[address] & 0xFF) | ((memory[address + 1] & 0xFF) << 8); // Read a word from the specified address
+    return readByte(address) | readByte(address + 1) << 8; // Read a word from the specified address
   }
 
   public void clear() {

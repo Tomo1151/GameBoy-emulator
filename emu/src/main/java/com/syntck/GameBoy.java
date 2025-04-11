@@ -22,18 +22,23 @@ public class GameBoy {
     this.cpu = new CPU(cartridge);
     this.cartridge = cartridge;
     this.gameBoyFrame = new GameBoyFrame(this.cpu.bus.gpu);
-    cartridge.dump(0x0104, 0x0133);
+    this.cartridge.dump(0x0104, 0x0133);
 
     this.run();
   }
 
   public void run() {
     while (true) {
+      // CPUのクロックサイクルを実行
       this.cpu.step();
+
       // System.out.println("Status: " + String.format("0x%04X", this.cpu.bus.readByte(0xFF01)));
       // System.out.println("LY: " + cpu.bus.gpu.ly);
-      if (cpu.bus.gpu.ly == 144) {
+
+      if (this.cpu.bus.gpu.frameUpdated) {
         this.gameBoyFrame.repaint();
+        this.cpu.bus.gpu.frameUpdated = false;
+        // break;
       }
     }
   }
@@ -101,10 +106,10 @@ class GameBoyPanel extends JPanel {
   public static final int FRAME_RATE = 60; // 60 FPS
   public static final int FRAME_SCALE = 3; // ウィンドウサイズを拡大する倍率
   private final Color[] COLORS = {
-    new Color(0, 0, 0),
-    new Color(96, 96, 96),
-    new Color(192, 192, 192),
-    new Color(255, 255, 255),
+    new Color(232, 252, 204),
+    new Color(172, 212, 144),
+    new Color(84, 140, 112),
+    new Color(20, 44, 56),
   };
   private GPU gpu;
 

@@ -12,9 +12,11 @@ public class CPU {
   public int pc; // プログラムカウンタ
   public int sp; // スタックポインタ
   public int cycles; // サイクル数
+  public int timerCounter;
+  private int divCounter;
   public boolean interruptMasterEnable; // 割り込み許可フラグ
   private boolean halted; // HALTフラグ
-  private boolean debug = false;
+  public boolean debug = true;
 
   // テスト用
   public CPU() {
@@ -33,6 +35,8 @@ public class CPU {
     this.bus = new MemoryBus(this, cartridge);
     this.pc = 0x0100; // プログラムカウンタの初期値
     this.sp = 0xFFFE; // スタックポインタの初期値
+    this.timerCounter = 0;
+    this.divCounter = 0;
     this.interruptMasterEnable = true;
     this.halted = false;
 
@@ -152,8 +156,8 @@ public class CPU {
         // 指定したレジスタやアドレスの値をレジスタAと比較する命令
         ArithmeticTarget target = instruction.getArithmeticTarget();
         int value = getValueForArithmeticTarget(target);
+        // System.out.println(String.format("CP A (0x%04X) : D8 (0x%04X)", this.registers.a, value) );
         cp(value); // CPは結果を保存しない
-        // System.out.println("CP " + target + " " + String.format("$%04X", value));
         return true;
       }
       
@@ -379,7 +383,7 @@ public class CPU {
         RotateTarget target = instruction.getRotateTarget();
         int value = getValueForRotateTarget(target);
         boolean lsb = (value & 0x01) != 0;
-        int result = ((value >> 1) | (lsb ? 0x80 : 0)) & 0xFF;
+        int result = (((value >> 1) & 0x7F)| (lsb ? 0x80 : 0));
         this.registers.f.zero = result == 0;
         this.registers.f.subtract = false;
         this.registers.f.halfCarry = false;
@@ -433,8 +437,10 @@ public class CPU {
         return true;
       }
 
-      // Add implementation for DAA instruction
+      // MARK: DAA
       case DAA: {
+        // DAA命令はBCD補正を行う命令
+        // レジスタAの値をBCD形式に変換するために、フラグレジスタの状態に基づいて調整を行う
         int a = this.registers.a;
         boolean carry = this.registers.f.carry;
         boolean halfCarry = this.registers.f.halfCarry;
@@ -473,13 +479,13 @@ public class CPU {
         JumpTest test = instruction.getJumpTest();
         boolean condition = testJumpCondition(test);
         int pc = jump(condition);
-        this.pc = pc - 3; // 共通処理としてJP命令のバイト数分進められるため，それを考慮して引く
-        return true;
+        this.pc = wrappingSub16(pc, 3); // 共通処理としてJP命令のバイト数分進められるため，それを考慮して引く
+        return condition;
       }
 
       case JPHL: {
         int pc = jumpHL(); //this.bus.readByte(this.registers.get_hl())
-        this.pc = pc - 1; // 共通処理としてJPHL命令のバイト数分進められるため，それを考慮して引く
+        this.pc = wrappingSub16(pc, 1); // 共通処理としてJPHL命令のバイト数分進められるため，それを考慮して引く
         return true;
       }
 
@@ -487,8 +493,8 @@ public class CPU {
         JumpTest test = instruction.getJumpTest();
         boolean condition = testJumpCondition(test);
         int pc = jumpRelative(condition);
-        this.pc = pc - 2; // 共通処理としてJR命令のバイト数分進められるため，それを考慮して引く, 一時的にマイナスになっても確実に戻されるためwrappingしない
-        return true;
+        this.pc = wrappingSub16(pc, 2); // 共通処理としてJR命令のバイト数分進められるため，それを考慮して引く, 一時的にマイナスになっても確実に戻されるためwrappingしない
+        return condition;
       }
 
       // MARK: LD, LDHL
@@ -576,8 +582,8 @@ public class CPU {
         JumpTest test = instruction.getJumpTest();
         boolean condition = testJumpCondition(test);
         int pc = call(condition);
-        this.pc = pc - 3; // 共通処理としてCALL命令のバイト数分進められるため，それを考慮して引く
-        return true;
+        this.pc = wrappingSub16(pc, 3); // 共通処理としてCALL命令のバイト数分進められるため，それを考慮して引く
+        return condition;
       }
 
       // MARK: RET
@@ -585,14 +591,15 @@ public class CPU {
         JumpTest test = instruction.getJumpTest();
         boolean condition = testJumpCondition(test);
         int pc = return_(condition); // return_メソッドは条件に基づいてPCを返す
-        this.pc = pc - 1; // 共通処理としてRET命令のバイト数分進められるため，それを考慮して引く
-        return true;
+        this.pc = wrappingSub16(pc, 1); // 共通処理としてRET命令のバイト数分進められるため，それを考慮して引く
+        return condition;
       }
 
       case RETI: {
-        // TODO 未実装
-        // this.interruptMasterEnable = true;
-        // return pop();
+        // RETI命令は、割り込みを有効にしてからリターンする命令
+        this.interruptMasterEnable = true; // 割り込みを有効にする
+        int pc = return_(true); // 条件に関係なくリターンする
+        this.pc = wrappingSub16(pc, 1); // 共通処理としてRET命令のバイト数分進められるため，それを考慮して引く
         return true;
       }
 
@@ -620,7 +627,6 @@ public class CPU {
 
       // MARK: STOP
       case STOP: {
-        // TODO 未実装
         return true;
       }
 
@@ -638,7 +644,6 @@ public class CPU {
       }
 
       default:
-        // TODO 未実装の命令
         throw new IllegalArgumentException("Unimplemented instruction: " + instruction.getType());
     }
   }
@@ -646,13 +651,14 @@ public class CPU {
   // MARK: *** step() ***
   public void step() {
     if (this.halted) {
-      // HALT状態では命令を実行せずにPCを進める
+      updateTimers(1);
+      updateGraphics(1);
+      handleInterrupts();
       return;
     }
     
     // プログラムカウンタから命令を取得
     int instructionByte = this.bus.readByte(this.pc);
-    int prevPC = this.pc;
 
     // プレフィックス命令か判別
     boolean isPrefixed = instructionByte == 0xCB;
@@ -665,27 +671,136 @@ public class CPU {
     
     // 命令をデコード
     Instruction instruction = Instruction.fromByte(instructionByte, isPrefixed);
-    if (this.debug) System.out.println("PC: " + String.format("$%04X", this.pc) + " SP: " + String.format("$%04X", this.sp) + " isPrefixed: " + isPrefixed + " Instruction: " + String.format("%04X", instructionByte) + " " + instruction.getType() + " " + (instruction.operand0) + " " + (instruction.operand1));
+    if (this.debug) System.out.println(String.format("$%04X: ", this.pc) + " OP: " + (isPrefixed ? "0xCB" : "0x") + String.format("%02X", instructionByte) + "(" + instruction.getType() + ") " + (instruction.operand0) + " " + (instruction.operand1));
+    if (this.debug) this.registers.f.dump();
+    if (this.debug) System.out.println(String.format("af= %04X, bc= %04X, de= %04X, hl= %04X, sp= %04X, pc= %04X", this.registers.get_af(), this.registers.get_bc(), this.registers.get_de(), this.registers.get_hl(), this.sp, this.pc));
+    if (this.debug) System.out.println();
 
     if (instruction != null && instruction.isValid()) {
       // 命令を実行，実行されたかどうかを取得 (CALL / JR / RET など)
       boolean condition = execute(instruction);
-      if (condition) {
-        this.pc += InstructionLengthUtil.getInstructionLength(instructionByte, isPrefixed);
-      }
+      this.pc = wrappingAdd16(this.pc, InstructionLengthUtil.getInstructionLength(instructionByte, isPrefixed));
 
       int cycles = InstructionLengthUtil.getInstructionCycles(instructionByte, isPrefixed, condition);
 
-      // updateTimers(cycles);
-      this.bus.gpu.update(cycles);
-      // handleInterrupts();
+      updateTimers(cycles);
+      updateGraphics(cycles);
+      handleInterrupts();
 
       // Logging
-      if (this.debug) System.out.println(String.format("PC updated: +%d = 0x%04X", this.pc - prevPC, this.pc) + String.format(" SP updated: 0x%4X", this.sp) + " Cycles: " + cycles + "\n");
+      // if (this.debug) System.out.println(String.format("PC: 0x%04X -> 0x%04X", prevPC, this.pc) + String.format(" SP updated: 0x%4X", this.sp) + " Cycles: " + cycles + "\n");
+      // if (this.debug) this.registers.f.dump();
 
     } else {
       // Handle invalid instruction
       throw new IllegalArgumentException("Invalid instruction: " + String.format("%02X", instructionByte) + " isPrefixed: " + isPrefixed);
+    }
+  }
+
+  private void updateGraphics(int cycles) {
+    if (this.bus.gpu.update(cycles)) {
+      requestInterrupt(0x00); //V BLANK割り込み要求
+    }
+  }
+
+  private void requestInterrupt(int id) {
+    int req = this.bus.readByte(0xFF0F);
+    req |= id; // 割り込み要求をセット
+    this.bus.writeByte(0xFF0F, req); // 割り込み要求を更新
+  }
+
+  private void handleDivRegister(int cycles) {
+    this.divCounter += cycles;
+
+    if (this.divCounter >= 0xFF) {
+      this.divCounter -= 0xFF;
+      // 0xFF04 に writeByte することができないため
+      this.bus.memory[0xFF04] = wrappingAdd(this.bus.memory[0xFF04], 1); // DIVレジスタをインクリメント
+    }
+  }
+
+  private void updateTimers(int cycles) {
+    final int MAX_CLOCK = 4194304; // 4194304Hz
+    handleDivRegister(cycles);
+
+    int tmc = this.bus.readByte(0xFF07);
+    if ((tmc & 0x04) == 0) return;
+
+    int clockSelect = tmc & 0x03;
+    int clock;
+
+    switch (clockSelect) {
+      case 0x00:
+        clock = MAX_CLOCK / 4096; // 4096Hz
+        break;
+      case 0x01:
+        clock = MAX_CLOCK / 262144; // 262144Hz
+        break;
+      case 0x02:
+        clock = MAX_CLOCK / 65536; // 65536Hz
+        break;
+      case 0x03:
+        clock = MAX_CLOCK / 16384; // 16384Hz
+        break;
+      default:
+        throw new IllegalArgumentException("Invalid clock select: " + clockSelect);
+    }
+
+    this.timerCounter += cycles; // タイマーカウンタを更新
+    if (this.timerCounter < clock) return;
+
+    this.timerCounter -= clock;
+    int tima = this.bus.readByte(0xFF05);
+
+    if (tima == 255) {
+      int tma = this.bus.readByte(0xFF06);
+      this.bus.writeByte(0xFF05, tma);
+      requestInterrupt(0x02);
+    } else {
+      this.bus.writeByte(0xFF05, tima + 1);
+    }
+  }
+
+  private void handleInterrupts() {
+    this.halted = false; // HALT解除
+
+    if (!this.interruptMasterEnable) return;
+
+    int request = this.bus.readByte(0xFF0F);
+    int enabled = this.bus.readByte(0xFFFF);
+
+    if (request == 0) return;
+
+
+    for (int i = 0; i < 5; i++) {
+      int interruptType = (0x01 << i);
+
+      if ((request & interruptType) != 0 && (enabled & interruptType) != 0) {
+        // 割り込みが要求されていて、かつ有効な割り込みの場合
+        this.interruptMasterEnable = false; // 割り込みを無効にする
+        this.bus.writeByte(0xFF0F, request & ~interruptType); // 割り込み要求をクリア
+        push(this.pc); // 現在のPCをスタックに保存
+
+        switch (interruptType) {
+          case 0x00: // VBLANK
+            this.pc = 0x0040; // VBLANK割り込みベクタ
+            break;
+          case 0x01: // LCDC
+            this.pc = 0x0048; // LCDC割り込みベクタ
+            break;
+          case 0x02: // TIMER
+            this.pc = 0x0050; // TIMER割り込みベクタ
+            break;
+          case 0x03: // SERIAL
+            this.pc = 0x0058; // SERIAL割り込みベクタ
+            break;
+          case 0x04: // JOYPAD
+            this.pc = 0x0060; // JOYPAD割り込みベクタ
+            break;
+          default:
+            throw new IllegalArgumentException("Invalid interrupt vector: " + String.format("%02X", this.pc));
+        }
+      }
     }
   }
 
@@ -829,6 +944,7 @@ public class CPU {
   
   // MARK: jumpRelative()
   int jumpRelative(boolean condition) {
+    // if (this.debug) System.out.println(String.format("Z: %d, N: %d, H: %d, C: %d", this.registers.f.zero, this.registers.f.subtract, this.registers.f.halfCarry, this.registers.f.carry));
     if (condition) {
       int offset = readNextByte();
       // 符号付き8ビットとして扱う
@@ -867,7 +983,7 @@ public class CPU {
     }
   }
 
-  // MARK: ret()
+  // MARK: return()
   int return_(boolean condition) {
     if (condition) {
       return pop(); // スタックからポップしてPCを更新
@@ -903,7 +1019,7 @@ public class CPU {
       case HL_ADDR: return this.bus.readByte(this.registers.get_hl());
       case D8: {
         int value = readNextByte();
-        if (this.debug) System.out.println("Compare A with: " + String.format("$%04X", value));
+        if (this.debug) System.out.println("Compare " + String.format("$%04X", this.registers.a) +" with: " + String.format("$%04X", value));
         return value;
       }
       default:
@@ -1125,6 +1241,7 @@ public class CPU {
       }
       case FF00_A8: {
         int offset = readNextByte();
+        if (this.debug) System.out.println("FF00_A8: " + String.format("$%04X", 0xFF00 + offset));
         return this.bus.readByte(0xFF00 + offset);
       }
       case FF00_C: {
