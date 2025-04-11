@@ -60,4 +60,15 @@ public class Registers {
     this.f = FlagsRegister.fromByte(value & 0x00FF);
     return get_af();
   }
+
+  public void clear() {
+    this.a = 0x00; // Aレジスタをクリア
+    this.b = 0x00; // Bレジスタをクリア
+    this.c = 0x00; // Cレジスタをクリア
+    this.d = 0x00; // Dレジスタをクリア
+    this.e = 0x00; // Eレジスタをクリア
+    this.h = 0x00; // Hレジスタをクリア
+    this.l = 0x00; // Lレジスタをクリア
+    this.f.clear(); // Fレジスタをクリア
+  }
 }

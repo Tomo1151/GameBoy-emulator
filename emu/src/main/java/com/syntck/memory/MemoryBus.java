@@ -82,4 +82,10 @@ public class MemoryBus {
     }
     return (memory[address] & 0xFF) | ((memory[address + 1] & 0xFF) << 8); // Read a word from the specified address
   }
+
+  public void clear() {
+    for (int i = 0; i < MEMORY_SIZE; i++) {
+      memory[i] = 0; // Clear the memory
+    }
+  }
 }

@@ -16,11 +16,14 @@ public class CPU {
   private boolean halted; // HALTフラグ
   private boolean debug = false;
 
+  // テスト用
   public CPU() {
     this.registers = new Registers();
+    this.registers.clear();
     this.bus = new MemoryBus(this, null); // Cartridgeはnullで初期化
-    this.pc = 0x0100; // プログラムカウンタの初期値
-    this.sp = 0xFFFE; // スタックポインタの初期値
+    this.bus.clear();
+    this.pc = 0x0000; // プログラムカウンタの初期値
+    this.sp = 0xFFFF; // スタックポインタの初期値
     this.interruptMasterEnable = true;
     this.halted = false;
   }

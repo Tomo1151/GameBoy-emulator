@@ -63,6 +63,13 @@ public class FlagsRegister {
     return flag;
   }
 
+  public void clear() {
+    this.zero = false;
+    this.subtract = false;
+    this.halfCarry = false;
+    this.carry = false;
+  }
+
   public void dump() {
     System.out.println("Flags Register:");
     System.out.println("  Zero: " + (zero ? "1" : "0"));
