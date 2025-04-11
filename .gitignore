@@ -27,3 +27,4 @@ memo.md
 
 # Ignore ROM files
 **/rom/*
+logs/
