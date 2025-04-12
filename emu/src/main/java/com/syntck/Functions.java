@@ -19,6 +19,14 @@ public class Functions {
     return new OverflowingAddResult(result, overflow);
   }
 
+  public static OverflowingAddResult overflowingAdd16(int a, int b) {
+    int result = a + b;
+    if (result > 0xFFFF) {
+      result &= 0xFFFF; // 必ず16ビットでマスク
+    }
+    return new OverflowingAddResult(result, result > 0xFFFF);
+  }
+
   // Fix overflowingSubtract to handle 16-bit values
   public static OverflowSubtractResult overflowingSub(int a, int b) {
     int result = a - b;

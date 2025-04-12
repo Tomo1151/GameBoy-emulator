@@ -16,7 +16,7 @@ public class CPU {
   private int divCounter;
   public boolean interruptMasterEnable; // 割り込み許可フラグ
   private boolean halted; // HALTフラグ
-  public boolean debug = true;
+  public boolean debug = false;
 
   // テスト用
   public CPU() {
@@ -78,7 +78,7 @@ public class CPU {
       case ADDSP: {
         // スタックポインタに対して加算を行う命令
         int value = readNextByte();
-        if (value > 0xFF) value = value - 0x100; // 符号付き8ビットに変換
+        if (value > 0x7F) value = value - 0x100; // 符号付き8ビットに変換
         this.sp = addSP(value);
         return true;
       }
@@ -127,7 +127,7 @@ public class CPU {
         // 指定したレジスタやアドレスの値をインクリメントする命令 (16bit)
         RegisterPair pair = instruction.getRegisterPair();
         int value = getValueForRegisterPair(pair);
-        int result = overflowingAdd(value, 1).value;
+        int result = wrappingAdd16(value, 1);
         setValueForRegisterPair(pair, result);
         return true;
       }
@@ -819,8 +819,8 @@ public class CPU {
 
   int addHL(int value) {
     int hl = this.registers.get_hl();
-    int result = overflowingAdd(hl, value).value;
-    boolean overflow = overflowingAdd(hl, value).overflow;
+    int result = overflowingAdd16(hl, value).value;
+    boolean overflow = overflowingAdd16(hl, value).overflow;
 
     this.registers.f.subtract = false;
     this.registers.f.halfCarry = ((hl & 0x0FFF) + (value & 0x0FFF)) > 0x0FFF;
@@ -832,13 +832,13 @@ public class CPU {
   int addSP(int value) {
     // 16ビット演算を確実に行うため、直接計算
     int result = (this.sp + value) & 0xFFFF;
-    
+
     // フラグを設定（zeroとsubtractはADDSP命令では常にfalse）
     this.registers.f.zero = false;
     this.registers.f.subtract = false;
     this.registers.f.halfCarry = (this.sp & 0x0F) + (value & 0x0F) > 0x0F;
     this.registers.f.carry = (this.sp & 0xFF) + (value & 0xFF) > 0xFF;
-    
+
     return result;
   }
 
@@ -939,7 +939,7 @@ public class CPU {
  
   // MARK: jumpHL()
   int jumpHL() {
-    return this.bus.readByte(this.registers.get_hl()); // HLレジスタの値がジャンプ先アドレス
+    return this.registers.get_hl(); // HLレジスタの値がジャンプ先アドレス
   }
   
   // MARK: jumpRelative()
