@@ -6,44 +6,31 @@ public class Functions {
   // Fix overflowingAdd to handle 16-bit values
   public static OverflowingResult overflowingAdd(int a, int b) {
     int fullSum = a + b;
-    // For 8-bit operations
-    boolean overflow8 = (a & 0xFF) + (b & 0xFF) > 0xFF;
-    // For 16-bit operations
-    boolean overflow16 = (a & 0xFFFF) + (b & 0xFFFF) > 0xFFFF;
-    
-    // Determine if this is an 8-bit or 16-bit operation based on the inputs
-    boolean is16Bit = a > 0xFF || b > 0xFF;
-    int result = is16Bit ? fullSum & 0xFFFF : fullSum & 0xFF;
-    boolean overflow = is16Bit ? overflow16 : overflow8;
-    
+    int result = fullSum & 0xFF; // 8ビットにマスク
+    boolean overflow = fullSum > 0xFF;
     return new OverflowingResult(result, overflow);
   }
 
   public static OverflowingResult overflowingAdd16(int a, int b) {
-    int result = a + b;
-    if (result > 0xFFFF) {
-      result &= 0xFFFF; // 必ず16ビットでマスク
-    }
-    return new OverflowingResult(result, result > 0xFFFF);
+    int fullSum = a + b;
+    boolean overflow = fullSum > 0xFFFF;
+    int result = fullSum & 0xFFFF;
+    return new OverflowingResult(result, overflow);
   }
 
   // Fix overflowingSubtract to handle 16-bit values
   public static OverflowingResult overflowingSub(int a, int b) {
-    int result = a - b;
-    // Determine if this is an 8-bit or 16-bit operation based on the inputs
-    boolean is16Bit = a > 0xFF || b > 0xFF;
-    
-    if (is16Bit) {
-      if (result < 0) {
-        result &= 0xFFFF; // Keep only the lower 16 bits
-      }
-    } else {
-      if (result < 0) {
-        result &= 0xFF; // Keep only the lower 8 bits
-      }
-    }
-    
-    return new OverflowingResult(result, result < 0);
+    int fullResult = a - b;
+    int result = fullResult & 0xFF; // 8ビットにマスク
+    boolean overflow = fullResult < 0;
+    return new OverflowingResult(result, overflow);
+  }
+
+  public static OverflowingResult overflowingSub16(int a, int b) {
+    int fullResult = a - b;
+    int result = fullResult & 0xFFFF; // 16ビットにマスク
+    boolean overflow = fullResult < 0;
+    return new OverflowingResult(result, overflow);
   }
 
   public static int wrappingSub16(int a, int b) {

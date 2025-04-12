@@ -71,7 +71,9 @@ public class CPU {
         RegisterPair pair = instruction.getRegisterPair();
         int value = getValueForRegisterPair(pair);
         int result = addHL(value);
+        System.out.print("RESULT: " + result);
         this.registers.set_hl(result);
+        System.out.println(" SET: " + this.registers.get_hl());
         return true;
       }
 
@@ -505,10 +507,10 @@ public class CPU {
         if (this.debug) System.out.println("LD: " + target + ", " + source + ", " + String.format("$%04X",sourceValue));
         setValueForLoadTarget(target, sourceValue, source == LoadSource.A);
         if (target == LoadTarget.HLI_ADDR || source == LoadSource.HLI_ADDR) {
-          this.registers.set_hl(wrappingAdd(this.registers.get_hl(), 1));
+          this.registers.set_hl(wrappingAdd16(this.registers.get_hl(), 1));
         }
         if (target == LoadTarget.HLD_ADDR || source == LoadSource.HLD_ADDR) {
-          this.registers.set_hl(wrappingSub(this.registers.get_hl(), 1));
+          this.registers.set_hl(wrappingSub16(this.registers.get_hl(), 1));
         }
         return true;
       }
@@ -822,9 +824,13 @@ public class CPU {
     int result = overflowingAdd16(hl, value).value;
     boolean overflow = overflowingAdd16(hl, value).overflow;
 
+    // System.out.println("ADDHL: " + "" + String.format("$%04X", hl) + " + " + String.format("$%04X", value) + " = " + String.format("$%04X", result) + ", overflow: " + overflow);
+
     this.registers.f.subtract = false;
     this.registers.f.halfCarry = ((hl & 0x0FFF) + (value & 0x0FFF)) > 0x0FFF;
     this.registers.f.carry = overflow;
+
+    // System.out.println("Z: " + this.registers.f.zero + ", N: " + this.registers.f.subtract + ", H: " + this.registers.f.halfCarry + ", C: " + this.registers.f.carry);
 
     return result & 0xFFFF;
   }
@@ -933,7 +939,7 @@ public class CPU {
       if (this.debug) System.out.println("Jump to: " + String.format("$%04X", value));
       return value; // 次のワード(2byte)を読み込む
     } else {
-      return overflowingAdd(this.pc, 3).value; // 3バイト足す
+      return overflowingAdd16(this.pc, 3).value; // 3バイト足す
     }
   }
  
@@ -966,15 +972,15 @@ public class CPU {
   // MARK: pop()
   int pop() {
     int lsb = this.bus.readByte(this.sp); // スタックから下位バイトを読み込む
-    this.sp = overflowingAdd(this.sp, 1).value; // スタックポインタを1バイト分増やす
+    this.sp = overflowingAdd16(this.sp, 1).value; // スタックポインタを1バイト分増やす
     int msb = this.bus.readByte(this.sp); // スタックから上位バイトを読み込む
-    this.sp = overflowingAdd(this.sp, 1).value; // スタックポインタを1バイト分増やす
+    this.sp = overflowingAdd16(this.sp, 1).value; // スタックポインタを1バイト分増やす
     return ((msb << 8) | lsb); // リトルエンディアンで結合
   }
 
   // MARK: call()
   int call(boolean condition) {
-    int nextPc = overflowingAdd(this.pc, 3).value; // 次のPCのアドレスを計算
+    int nextPc = overflowingAdd16(this.pc, 3).value; // 次のPCのアドレスを計算
     if (condition) {
       push(nextPc); // 次のPCをスタックにプッシュ
       return readNextWord(); // 次のワードを読み込む
@@ -988,7 +994,7 @@ public class CPU {
     if (condition) {
       return pop(); // スタックからポップしてPCを更新
     } else {
-      return overflowingAdd(this.pc, 1).value; // PCを1バイト進める
+      return overflowingAdd16(this.pc, 1).value; // PCを1バイト進める
     }
   }
 
