@@ -2,7 +2,7 @@ package com.syntck.cpu;
 
 import static com.syntck.Functions.*;
 
-import com.syntck.Functions.OverflowingAddResult;
+import com.syntck.Functions.OverflowingResult;
 import com.syntck.memory.MemoryBus;
 import com.syntck.cartridge.Cartridge;
 
@@ -808,7 +808,7 @@ public class CPU {
 
   // MARK: add()
   int addA(int value) {
-    OverflowingAddResult result = overflowingAdd(this.registers.a, value);
+    OverflowingResult result = overflowingAdd(this.registers.a, value);
 
     this.registers.f.zero = result.value == 0x00;
     this.registers.f.subtract = false;
