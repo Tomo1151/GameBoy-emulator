@@ -128,10 +128,8 @@ public class JPTest {
     CPU cpu = new CPU();
     cpu.bus.writeByte(0x0000, 0xE9); // JP (HL)
     cpu.registers.set_hl(0x1234);
-    cpu.bus.writeByte(0x1234, 0x0024); // HLレジスタのアドレスに何か書き込む
     cpu.step();
-    assertEquals(0x0024, cpu.bus.readByte(0x1234)); // HLレジスタのアドレスから値を読み取る
-    assertEquals(0x0024, cpu.pc); // PCがHLレジスタが指すアドレス先の値に変更される
+    assertEquals(0x1234, cpu.pc); // PCがHLレジスタが指すアドレス先の値に変更される
   }
 
   // MARK: Sequential JP instructions
