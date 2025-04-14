@@ -68,6 +68,9 @@ public class MemoryBus {
 
     if (address == 0xFF50) this.memory[address] = value; // 0xFF50は無視する
 
+    if (0x0000 <= address && address <= 0x7FFF) {
+      this.cartridge.writeByte(address, value); // カートリッジに書き込む
+    }
     if (address == 0xFF40) {
       this.gpu.controls.convertFromInt(value); // LCD制御レジスタに値を設定
     } else if (address == 0xFF41) {
