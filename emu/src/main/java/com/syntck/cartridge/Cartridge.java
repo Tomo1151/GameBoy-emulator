@@ -34,14 +34,6 @@ public class Cartridge {
 
       setCartridgeType(binaryData[0x0147]); // カートリッジタイプを取得
 
-      System.out.println("Cartridge loaded: \n" +
-                         "CGB: " + this.isCGB + "\n" +
-                         "SGB: " + this.isSGB + "\n" +
-                         "Cartridge Type: " + this.cartridgeType + "\n" +
-                         "ROM Size: " + this.romSize + "\n" +
-                         "RAM Size: " + this.ramSize + "\n" +
-                         "Version: " + this.version);
-
     } catch (Exception e) {
       e.printStackTrace(); // エラーが発生した場合はスタックトレースを表示
     }
@@ -187,6 +179,14 @@ public class Cartridge {
     if (start < 0 || end > binaryData.length || start >= end) {
       throw new IllegalArgumentException("Invalid range for dump: " + String.format("0x%04X - 0x%04X", start, end));
     }
+
+    System.out.println("Cartridge loaded: \n" +
+    "CGB: " + this.isCGB + "\n" +
+    "SGB: " + this.isSGB + "\n" +
+    "Cartridge Type: " + this.cartridgeType + "\n" +
+    "ROM Size: " + this.romSize + "\n" +
+    "RAM Size: " + this.ramSize + "\n" +
+    "Version: " + this.version);
 
     for (int i = start; i <= end; i++) {
       System.out.printf("%02X ", binaryData[i]); // 16進数で表示
