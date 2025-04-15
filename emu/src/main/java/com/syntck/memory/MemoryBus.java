@@ -28,6 +28,12 @@ public class MemoryBus {
     if (0x0000 <= address && address <= 0x7FFF) {
       return this.cartridge.readByte(address); // Read from the cartridge if address is in ROM range
     }
+
+    // OAM
+    if (0xFE00 < address && address <= 0xFE9F) {
+      return this.gpu.readOAM(address); // OAMから読み取る
+    }
+
     if (address == 0xFF41) {
     return this.gpu.status.convertToInt(); // LCDステータスレジスタの値を返す
     } else if (address == 0xFF40) {
@@ -55,6 +61,11 @@ public class MemoryBus {
     // DIVカウンタ
     if (address == 0xFF04) {
       this.memory[address] = 0;
+    }
+
+    // OAM
+    if (0xFE00 <= address && address <= 0xFE9F) {
+      this.gpu.writeOAM(address, value); // OAMに書き込む
     }
 
     if (address == 0xFF50) this.memory[address] = value; // 0xFF50は無視する

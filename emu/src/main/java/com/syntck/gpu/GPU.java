@@ -16,9 +16,12 @@ public class GPU {
 
   public int[] vram = new int[VRAM_SIZE];
   public Tile[] tiles = new Tile[384];
+  public Sprite[] sprites = new Sprite[40]; // スプライトの数は40個
 
   private int[] frameBuffer = new int[SCREEN_WIDTH * SCREEN_HEIGHT];
   private int scanlineCounter;
+
+  private int[] oam = new int[0xA0]; // OAM (Object Attribute Memory) (スプライトの情報を格納するメモリ)
 
   public GPU() {
     this.vram = new int[VRAM_SIZE];
@@ -33,6 +36,12 @@ public class GPU {
     }
     for (int i = 0; i < this.tiles.length; i++) {
       this.tiles[i] = new Tile(new TilePixelValue[Tile.TILE_LENGTH][Tile.TILE_LENGTH]);
+    }
+    for (int i = 0; i < this.oam.length; i++) {
+      this.oam[i] = 0; // Initialize OAM with 0
+    }
+    for (int i = 0; i < this.sprites.length; i++) {
+      this.sprites[i] = new Sprite(0, 0, 0, 0); // Initialize sprites with default values
     }
   }
 
@@ -124,6 +133,26 @@ public class GPU {
     return this.vram[address];
   }
 
+  public void writeOAM(int address, int value) {
+    this.oam[address - 0xFE00] = value; // OAMに書き込む
+    for (int i = 0; i < this.sprites.length; i++) {
+      int index = i * 4; // スプライトのインデックスを計算
+      int y = this.oam[index];
+      int x = this.oam[index + 1];
+      int tileIndex = this.oam[index + 2];
+      int attributes = this.oam[index + 3];
+
+      this.sprites[i].y = y; // スプライトのY座標を設定
+      this.sprites[i].x = x; // スプライトのX座標を設定
+      this.sprites[i].tileIndex = tileIndex;
+      this.sprites[i].attributes = attributes;
+    }
+  }
+
+  public int readOAM(int address) {
+    return this.oam[address - 0xFE00];
+  }
+
   public void writeVRAM(int index, int value) {
     this.vram[index] = value;
 
@@ -191,6 +220,20 @@ class Tile {
       }
     }
     return new Tile(pixels);
+  }
+}
+
+class Sprite {
+  public int y;
+  public int x;
+  public int tileIndex;
+  public int attributes;
+
+  public Sprite(int y, int x, int tileIndex, int attributes) {
+    this.y = y;
+    this.x = x;
+    this.tileIndex = tileIndex;
+    this.attributes = attributes;
   }
 }
 
