@@ -8,11 +8,12 @@ import com.syntck.mapper.NoMBC;
 
 public class Cartridge {
   public int[] binaryData; // ROMのバイナリデータを格納する配列
+  public int[] ram;
   public boolean isCGB; // CGBフラグ
   public boolean isSGB; // SGBフラグ
   public CartridgeType cartridgeType; // カートリッジタイプ
-  public RomSize romSize; // ROMサイズ
-  public RamSize ramSize; // RAMサイズ
+  public int romSize; // ROMサイズ
+  public int ramSize; // RAMサイズ
   public int version; // ROMバージョン
   public Mapper mapper; // マッパー
 
@@ -29,9 +30,14 @@ public class Cartridge {
 
       this.isCGB = (binaryData[0x0143] == 0xC0); // CGBフラグを取得
       this.isSGB = (binaryData[0x0146] == 0x03); // SGBフラグを取得
-      setRomSize(binaryData[0x0148]); // ROMサイズを取得
+      // setRomSize(binaryData[0x0148]); // ROMサイズを取得
       setRamSize(binaryData[0x0149]); // RAMサイズを取得
       this.version = binaryData[0x014C]; // ROMのバージョンを取得
+
+      this.ram = new int[this.ramSize]; // RAMのサイズを設定
+      for (int i = 0; i < this.ramSize; i++) {
+        this.ram[i] = 0x00; // RAMを初期化
+      }
 
       setCartridgeType(binaryData[0x0147]); // カートリッジタイプを取得
 
@@ -51,120 +57,120 @@ public class Cartridge {
   public void setRamSize(int ramSize) {
     switch (ramSize) {
       case 0x00:
-        this.ramSize = RamSize.NO_RAM;
+        this.ramSize = 0;
         break;
       case 0x01:
-        this.ramSize = RamSize.UNUSED;
+        this.ramSize = 0;
         break;
       case 0x02:
-        this.ramSize = RamSize.BANK_1;
+        this.ramSize = 8 * 1024 * 1; // 8KB
         break;
       case 0x03:
-        this.ramSize = RamSize.BANK_4;
+        this.ramSize = 8 * 1024 * 4; // 32KB
         break;
       case 0x04:
-        this.ramSize = RamSize.BANK_16;
+        this.ramSize = 8 * 1024 * 16; // 128KB
         break;
       case 0x05:
-        this.ramSize = RamSize.BANK_8;
+        this.ramSize = 8 * 1024 * 8; // 64KB
         break;
       default:
         throw new IllegalArgumentException("Invalid RAM size: " + ramSize);
     }
   }
 
-  public void setRomSize(int romSize) {
-    switch (romSize) {
-      case 0x00:
-        this.romSize = RomSize.BANK_2;
-        break;
-      case 0x01:
-        this.romSize = RomSize.BANK_4;
-        break;
-      case 0x02:
-        this.romSize = RomSize.BANK_8;
-        break;
-      case 0x03:
-        this.romSize = RomSize.BANK_16;
-        break;
-      case 0x04:
-        this.romSize = RomSize.BANK_32;
-        break;
-      case 0x05:
-        this.romSize = RomSize.BANK_64;
-        break;
-      case 0x06:
-        this.romSize = RomSize.BANK_128;
-        break;
-      case 0x07:
-        this.romSize = RomSize.BANK_256;
-        break;
-      case 0x08:
-        this.romSize = RomSize.BANK_512;
-        break;
-      case 0x52:
-        this.romSize = RomSize.BANK_72;
-        break;
-      case 0x53:
-        this.romSize = RomSize.BANK_80;
-        break;
-      case 0x54:
-        this.romSize = RomSize.BANK_96;
-        break;
-      default:
-        throw new IllegalArgumentException("Invalid ROM size: " + romSize);
-    }
-  }
+  // public void setRomSize(int romSize) {
+  //   switch (romSize) {
+  //     case 0x00:
+  //       this.romSize = RomSize.BANK_2;
+  //       break;
+  //     case 0x01:
+  //       this.romSize = RomSize.BANK_4;
+  //       break;
+  //     case 0x02:
+  //       this.romSize = RomSize.BANK_8;
+  //       break;
+  //     case 0x03:
+  //       this.romSize = RomSize.BANK_16;
+  //       break;
+  //     case 0x04:
+  //       this.romSize = RomSize.BANK_32;
+  //       break;
+  //     case 0x05:
+  //       this.romSize = RomSize.BANK_64;
+  //       break;
+  //     case 0x06:
+  //       this.romSize = RomSize.BANK_128;
+  //       break;
+  //     case 0x07:
+  //       this.romSize = RomSize.BANK_256;
+  //       break;
+  //     case 0x08:
+  //       this.romSize = RomSize.BANK_512;
+  //       break;
+  //     case 0x52:
+  //       this.romSize = RomSize.BANK_72;
+  //       break;
+  //     case 0x53:
+  //       this.romSize = RomSize.BANK_80;
+  //       break;
+  //     case 0x54:
+  //       this.romSize = RomSize.BANK_96;
+  //       break;
+  //     default:
+  //       throw new IllegalArgumentException("Invalid ROM size: " + romSize);
+  //   }
+  // }
 
   public void setCartridgeType(int cartridgeType) { // TODO MBC1以外のマッパーを実装する
     switch (cartridgeType) {
       case 0x00:
         this.cartridgeType = CartridgeType.ROM_ONLY;
-        this.mapper = new NoMBC(this.binaryData, this.romSize.getValue(), this.ramSize.getValue());
+        this.mapper = new NoMBC(this.binaryData, this.ram, this.binaryData.length, this.ramSize);
         break;
       case 0x01:
         this.cartridgeType = CartridgeType.MBC1;
-        this.mapper = new MBC1(this.binaryData, this.romSize.getValue(), this.ramSize.getValue());
+        this.mapper = new MBC1(this.binaryData, this.ram, this.binaryData.length, this.ramSize);
         break;
       case 0x02:
         this.cartridgeType = CartridgeType.MBC2;
-        this.mapper = new MBC1(this.binaryData, this.romSize.getValue(), this.ramSize.getValue());
+        this.mapper = new MBC1(this.binaryData, this.ram, this.binaryData.length, this.ramSize);
         break;
       case 0x03:
         this.cartridgeType = CartridgeType.ROM_RAM;
-        this.mapper = new MBC1(this.binaryData, this.romSize.getValue(), this.ramSize.getValue());
+        this.mapper = new MBC1(this.binaryData, this.ram, this.binaryData.length, this.ramSize);
         break;
       case 0x04:
         this.cartridgeType = CartridgeType.MBC3_TIMER_BATTERY;
-        this.mapper = new MBC1(this.binaryData, this.romSize.getValue(), this.ramSize.getValue());
+        this.mapper = new MBC1(this.binaryData, this.ram, this.binaryData.length, this.ramSize);
         break;
       case 0x05:
         this.cartridgeType = CartridgeType.MBC5;
-        this.mapper = new MBC1(this.binaryData, this.romSize.getValue(), this.ramSize.getValue());
+        this.mapper = new MBC1(this.binaryData, this.ram, this.binaryData.length, this.ramSize);
         break;
       case 0x06:
         this.cartridgeType = CartridgeType.MBC6;
-        this.mapper = new MBC1(this.binaryData, this.romSize.getValue(), this.ramSize.getValue());
+        this.mapper = new MBC1(this.binaryData, this.ram, this.binaryData.length, this.ramSize);
         break;
       case 0x07:
         this.cartridgeType = CartridgeType.MBC7_SENSOR;
-        this.mapper = new MBC1(this.binaryData, this.romSize.getValue(), this.ramSize.getValue());
+        this.mapper = new MBC1(this.binaryData, this.ram, this.binaryData.length, this.ramSize);
         break;
       case 0x08:
         this.cartridgeType = CartridgeType.POCKET_CAMERA;
-        this.mapper = new MBC1(this.binaryData, this.romSize.getValue(), this.ramSize.getValue());
+        this.mapper = new MBC1(this.binaryData, this.ram, this.binaryData.length, this.ramSize);
         break;
       case 0x09:
         this.cartridgeType = CartridgeType.BANDAI_TAMA5;
-        this.mapper = new MBC1(this.binaryData, this.romSize.getValue(), this.ramSize.getValue());
+        this.mapper = new MBC1(this.binaryData, this.ram, this.binaryData.length, this.ramSize);
         break;
       case 0x0A:
         this.cartridgeType = CartridgeType.HuC3;
-        this.mapper = new MBC1(this.binaryData, this.romSize.getValue(), this.ramSize.getValue());
+        this.mapper = new MBC1(this.binaryData, this.ram, this.binaryData.length, this.ramSize);
         break;
       case 0x0B:
         this.cartridgeType = CartridgeType.HuC1_RAM_BATTERY;
-        this.mapper = new MBC1(this.binaryData, this.romSize.getValue(), this.ramSize.getValue());
+        this.mapper = new MBC1(this.binaryData, this.ram, this.binaryData.length, this.ramSize);
         break;
       default:
         throw new IllegalArgumentException("Invalid cartridge type: " + cartridgeType);

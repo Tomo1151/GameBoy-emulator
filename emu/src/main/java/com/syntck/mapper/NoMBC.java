@@ -2,15 +2,17 @@ package com.syntck.mapper;
 
 public class NoMBC implements Mapper {
   private int[] binaryData;
+  private int[] ram;
   private int romSize;
   private int ramSize;
 
-  public NoMBC(int[] binaryData, int romSize, int ramSize) {
-    init(binaryData, romSize, ramSize);
+  public NoMBC(int[] binaryData, int[] ram, int romSize, int ramSize) {
+    init(binaryData, ram, romSize, ramSize);
   }
 
-  public void init(int[] binaryData, int romSize, int ramSize) {
+  public void init(int[] binaryData, int[] ram, int romSize, int ramSize) {
     this.binaryData = binaryData; // バイナリデータを保存
+    this.ram = ram; // RAMを保存
     this.romSize = romSize; // ROMサイズを保存
     this.ramSize = ramSize; // RAMサイズを保存
   }
