@@ -6,6 +6,8 @@ import com.syntck.Functions.OverflowingResult;
 import com.syntck.memory.MemoryBus;
 import com.syntck.cartridge.Cartridge;
 
+import com.syntck.gpu.PPUInterrupt;
+
 public class CPU {
   public Registers registers; // CPU レジスタ
   public MemoryBus bus; // メモリバス
@@ -706,9 +708,24 @@ public class CPU {
 
   // MARK: updateGraphics
   private void updateGraphics(int cycles) {
-    if (this.bus.gpu.update(cycles)) {
+    PPUInterrupt interrupt = this.bus.gpu.update(cycles);
+
+    switch (interrupt) {
+      case VBLANK:
         requestInterrupt(0x00); // V-Blank割り込み要求（ビット0）
+        break;
+      case LCD:
+        requestInterrupt(0x01); // LCD [LYC=LY割り込み要求]（ビット1）
+        break;
+      default:
+        break;
     }
+    // if (this.bus.gpu.update(cycles)) {
+    //     requestInterrupt(0x00); // V-Blank割り込み要求（ビット0）
+    // }
+    // if (this.bus.gpu.ly == this.bus.gpu.lyc) {
+    //   requestInterrupt(0x01); // LCD [LYC=LY割り込み要求]（ビット1）
+    // }
   }
 
   // MARK: requestInterrupt

@@ -34,6 +34,24 @@ public class MemoryBus {
       return this.gpu.readOAM(address); // OAMから読み取る
     }
 
+    if (address == 0xFF42) {
+      return this.gpu.scy; // SCYレジスタの値を返す
+    } else if (address == 0xFF43) {
+      return this.gpu.scx; // SCXレジスタの値を返す
+    } else if (address == 0xFF46) {
+      return this.gpu.dma; // DMAレジスタの値を返す
+    } else if (address == 0xFF47) {
+      return this.gpu.bgp; // BGPレジスタの値を返す
+    } else if (address == 0xFF48) {
+      return this.gpu.obp0; // OBP0レジスタの値を返す
+    } else if (address == 0xFF49) {
+      return this.gpu.obp1; // OBP1レジスタの値を返す
+    } else if (address == 0xFF4A) {
+      return this.gpu.wy; // WYレジスタの値を返す
+    } else if (address == 0xFF4B) {
+      return this.gpu.wx; // WXレジスタの値を返す
+    }
+
     if (address == 0xFF41) {
     return this.gpu.status.convertToInt(); // LCDステータスレジスタの値を返す
     } else if (address == 0xFF40) {
@@ -71,6 +89,22 @@ public class MemoryBus {
     // OAM
     if (0xFE00 <= address && address <= 0xFE9F) {
       this.gpu.writeOAM(address, value); // OAMに書き込む
+    }
+
+    if (address == 0xFF42) {
+      this.gpu.scy = value; // SCYレジスタに値を設定
+    } else if (address == 0xFF43) {
+      this.gpu.scx = value; // SCXレジスタに値を設定
+    } else if (address == 0xFF47) {
+      this.gpu.bgp = value; // BGPレジスタに値を設定
+    } else if (address == 0xFF48) {
+      this.gpu.obp0 = value; // OBP0レジスタに値を設定
+    } else if (address == 0xFF49) {
+      this.gpu.obp1 = value; // OBP1レジスタに値を設定
+    } else if (address == 0xFF4A) {
+      this.gpu.wy = value; // WYレジスタに値を設定
+    } else if (address == 0xFF4B) {
+      this.gpu.wx = value; // WXレジスタに値を設定
     }
 
     if (address == 0xFF50) this.memory[address] = value; // 0xFF50は無視する

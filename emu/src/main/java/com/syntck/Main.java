@@ -20,9 +20,10 @@ public class Main {
       new Cartridge(ROM_PATH + "test/individual/09-op r,r.gb"),
       new Cartridge(ROM_PATH + "test/individual/10-bit ops.gb"),
       new Cartridge(ROM_PATH + "test/individual/11-op a,(hl).gb"),
+      new Cartridge(ROM_PATH + "test/dmg-acid2.gb"),
     };
 
-    Cartridge cartridge = tests[0];
+    Cartridge cartridge = tests[12];
 
     // try {
     //   FileOutputStream fos = new FileOutputStream("logs/Log_0.txt");

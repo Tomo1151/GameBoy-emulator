@@ -32,6 +32,12 @@ public class GameBoy {
       // CPUのクロックサイクルを実行
       this.cpu.step();
 
+      // try {
+      //   Thread.sleep(0, 1); // フレームレートに合わせてスリープ
+      // } catch (InterruptedException e) {
+      //   e.printStackTrace();
+      // }
+
       // System.out.println("Status: " + String.format("0x%04X", this.cpu.bus.readByte(0xFF01)));
       // System.out.println("LY: " + cpu.bus.gpu.ly);
 

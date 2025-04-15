@@ -4,6 +4,7 @@ import java.io.FileInputStream;
 
 import com.syntck.mapper.MBC1;
 import com.syntck.mapper.Mapper;
+import com.syntck.mapper.NoMBC;
 
 public class Cartridge {
   public int[] binaryData; // ROMのバイナリデータを格納する配列
@@ -119,7 +120,7 @@ public class Cartridge {
     switch (cartridgeType) {
       case 0x00:
         this.cartridgeType = CartridgeType.ROM_ONLY;
-        this.mapper = new MBC1(this.binaryData, this.romSize.getValue(), this.ramSize.getValue());
+        this.mapper = new NoMBC(this.binaryData, this.romSize.getValue(), this.ramSize.getValue());
         break;
       case 0x01:
         this.cartridgeType = CartridgeType.MBC1;

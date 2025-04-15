@@ -7,11 +7,22 @@ public class GPU {
   public static final int VRAM_END   = 0x9FFF;
   public static final int VRAM_SIZE  = VRAM_END - VRAM_BEGIN + 1;
 
+  public static final int SPRITE_OFFSET_X = 8; // スプライトのX座標オフセット
+  public static final int SPRITE_OFFSET_Y = 16; // スプライトのY座標オフセット
+
   // レジスタ
   public int ly; // 0xFF44 LYレジスタ (現在のスキャンラインのY座標)
   public int lyc; // 0xFF45 LYCレジスタ (LYと比較するY座標)
   public LCDControlRegisters controls; // 0xFF40 LCD制御レジスタ (LCDの制御)
   public LCDStatusRegisters status; // 0xFF41 LCDステータスレジスタ (LCDの状態を示すフラグ)
+  public int scy; // 0xFF42 SCYレジスタ (スクロールY座標)
+  public int scx; // 0xFF43 SCXレジスタ (スクロールX座標)
+  public int dma; // 0xFF46 DMAレジスタ (DMA転送の開始アドレス)
+  public int bgp; // 0xFF47 BGPレジスタ (背景パレットデータ)
+  public int obp0; // 0xFF48 OBP0レジスタ (スプライトパレットデータ0)
+  public int obp1; // 0xFF49 OBP1レジスタ (スプライトパレットデータ1)
+  public int wy; // 0xFF4A WYレジスタ (ウィンドウY座標)
+  public int wx; // 0xFF4B WXレジスタ (ウィンドウX座標)
   public boolean frameUpdated;
 
   public int[] vram = new int[VRAM_SIZE];
@@ -29,6 +40,13 @@ public class GPU {
     this.status = new LCDStatusRegisters(); // LCDステータスレジスタの初期化
     this.ly = 0; // LYレジスタの初期化
     this.lyc = 0; // LYCレジスタの初期化
+    this.scy = 0; // SCYレジスタの初期化
+    this.scx = 0; // SCXレジスタの初期化
+    this.bgp = 0; // BGPレジスタの初期化
+    this.obp0 = 0; // OBP0レジスタの初期化
+    this.obp1 = 0; // OBP1レジスタの初期化
+    this.wy = 0; // WYレジスタの初期化
+    this.wx = 0; // WXレジスタの初期化
     this.scanlineCounter = 0; // スキャンラインカウンタの初期化
     this.tiles = new Tile[384]; // 384 tiles
     for (int i = 0; i < this.vram.length; i++) {
@@ -45,11 +63,13 @@ public class GPU {
     }
   }
 
-  public boolean update(int cycles) {
-    // setLCDStatus();
-    // if (!isLCDEnabled) return;
-
+  public PPUInterrupt update(int cycles) {
     this.scanlineCounter += cycles;
+    PPUInterrupt interrupt = setLCDStatus();
+
+    if (!this.controls.enabled) {
+      return PPUInterrupt.NONE; // LCDが無効な場合は何もしない
+    }
 
     if (this.scanlineCounter >= 456) {
       // 1ライン分描画された
@@ -63,17 +83,18 @@ public class GPU {
         // VBlank開始
         // VBlankフラグをセット
         this.drawFrame();
+        return PPUInterrupt.VBLANK; // VBlank割り込みを返す
       } else if (currentLine < 144) {
         // 画面描画中
         this.drawScanline(currentLine);
         this.frameUpdated = true; // フレームが更新されたことを示すフラグをセット
-        return true;
+        return PPUInterrupt.LCD; // LCD割り込みを返す
       } else if (currentLine > 153) {
         // 1フレーム描画完了
         this.ly = 0; // LYをリセット
       }
     }
-    return false;
+    return interrupt; // 割り込みを返す
   }
 
   private void drawScanline(int scanline) {
@@ -104,6 +125,44 @@ public class GPU {
           int y = screenY + tileY; // タイルのY座標を計算
 
           if (x >= SCREEN_WIDTH || y >= SCREEN_HEIGHT) continue; // 画面外のタイルは無視
+
+          int pixelNum = 0;
+          if (pixel == TilePixelValue.Zero) {
+            pixelNum = 0; // 黒
+          } else if (pixel == TilePixelValue.One) {
+            pixelNum = 1; // ダークグレー
+          } else if (pixel == TilePixelValue.Two) {
+            pixelNum = 2; // ライトグレー
+          } else if (pixel == TilePixelValue.Three) {
+            pixelNum = 3; // 白
+          }
+
+          // System.out.print(pixelNum + " ");
+          this.frameBuffer[y * SCREEN_WIDTH + x] = pixelNum; // ピクセル値をフレームバッファに書き込む
+        }
+        // System.out.println();
+      }
+      // System.out.println();
+    }
+
+    // スプライトの描画
+    for (int i = 0; i < this.sprites.length; i++) {
+      int spriteX = this.sprites[i].x; // スプライトのX座標を計算
+      int spriteY = this.sprites[i].y; // スプライトのY座標を計算
+      Tile tile = this.tiles[this.sprites[i].tileIndex]; // スプライトのタイルを取得
+      int attributes = this.sprites[i].attributes; // スプライトの属性を取得
+      int priority = (attributes & 0x80) >> 7; // スプライトの優先度を取得
+      boolean yFlip = (attributes & 0x40) != 0; // Y軸反転フラグ
+      boolean xFlip = (attributes & 0x20) != 0; // X軸反転フラグ
+      int palette = (attributes & 0x10) >> 4; // パレット番号
+
+      for (int tileX = 0; tileX < Tile.TILE_LENGTH; tileX++) {
+        for (int tileY = 0; tileY < Tile.TILE_LENGTH; tileY++) {
+          TilePixelValue pixel = tile.pixels[tileY][tileX]; // タイルのピクセル値を取得
+          int x = spriteX + tileX - SPRITE_OFFSET_X; // スプライトのX座標を計算
+          int y = spriteY + tileY - SPRITE_OFFSET_Y; // スプライトのY座標を計算
+
+          if (x < 0 || y < 0 || x >= SCREEN_WIDTH || y >= SCREEN_HEIGHT) continue; // 画面外のタイルは無視
 
           int pixelNum = 0;
           if (pixel == TilePixelValue.Zero) {
@@ -197,6 +256,63 @@ public class GPU {
 
       this.tiles[tileIndex].pixels[rowIndex][pixelIndex] = pixelValue; // タイルのピクセル値を設定
     }
+  }
+
+  private PPUInterrupt setLCDStatus() {
+    if (!this.controls.enabled) {
+      this.scanlineCounter = 0; // スキャンラインカウンタをリセット
+      this.ly = 0; // LYレジスタをリセット
+      this.status.PPUMode = 1; // モード1 (VBlank) に設定
+      return PPUInterrupt.NONE;
+    }
+
+    int currentLine = this.ly; // 現在のラインを取得
+    int currentMode = this.status.PPUMode; // 現在のモードを取得
+    int mode = 0;
+    boolean reqInt = false; // 割り込み要求フラグ
+
+    if (currentLine >= 144) {
+      mode = 1;
+      this.status.PPUMode = 1; // VBlankモード
+      reqInt = this.status.mode1IntSelect; // VBlankモードの割り込み要求
+    } else {
+      int mode2Bounds = 80; // モード2の時間 (80クロックサイクル)
+      int mode3Bounds = 80 + 172; // モード3の時間 (172クロックサイクル)
+
+      if (this.scanlineCounter < mode2Bounds) {
+        mode = 2; // OAM読み込みモード
+        this.status.PPUMode = 2; // OAM読み込みモード
+        reqInt = this.status.mode2IntSelect; // OAM読み込みモードの割り込み要求
+      } else if (this.scanlineCounter < mode3Bounds) {
+        mode = 3; // VRAM読み込みモード
+        this.status.PPUMode = 3; // VRAM読み込みモード
+      } else {
+        mode = 0; // HBlankモード
+        this.status.PPUMode = 0; // HBlankモード
+        reqInt = this.status.mode0IntSelect; // HBlankモードの割り込み要求
+      }
+    }
+
+    PPUInterrupt interrupt = PPUInterrupt.NONE; // 割り込みの初期化
+
+    if (reqInt && (mode != currentMode)) {
+      // モードが変わった場合、割り込み要求をセット
+      interrupt = PPUInterrupt.LCD; // LCD割り込みを要求
+    }
+
+    if (this.ly == this.lyc) {
+      // LYCとLYが一致した場合、LYC=LY割り込みを要求
+      this.status.lycFlag = true; // LYC=LY割り込みを要求
+
+      if (this.status.lycIntSelect) {
+        // LYC=LY割り込みが有効な場合、割り込みを要求
+        interrupt = PPUInterrupt.LCD; // LCD割り込みを要求
+      }
+    } else {
+      this.status.lycFlag = false; // LYC=LY割り込みをクリア
+    }
+
+    return interrupt; // 割り込みを返す
   }
 }
 
