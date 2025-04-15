@@ -11,7 +11,7 @@ public class LCDControlRegisters {
   public boolean bgWindowEnabled; // BG & window enable / priority
 
   public LCDControlRegisters() {
-    this.enabled = false; // LCD & PPU enable
+    this.enabled = true; // LCD & PPU enable
     this.windowTileMap = false; // Window tile map
     this.windowEnabled = false; // Window enable
     this.tiles = false; // BG & Window tiles
