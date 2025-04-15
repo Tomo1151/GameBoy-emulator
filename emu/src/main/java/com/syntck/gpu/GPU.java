@@ -160,6 +160,14 @@ public class GPU {
         for (int tileY = 0; tileY < Tile.TILE_LENGTH; tileY++) {
           TilePixelValue pixel = tile.pixels[tileY][tileX]; // タイルのピクセル値を取得
           int[] color = Tile.getColorFromPalette(pixel, (palette == 0) ? this.obp0 : this.obp1); // タイルの色を取得
+
+          if (xFlip) {
+            tileX = Tile.TILE_LENGTH - 1 - tileX; // X軸反転
+          }
+          if (yFlip) {
+            tileY = Tile.TILE_LENGTH - 1 - tileY; // Y軸反転
+          }
+
           int x = spriteX + tileX - SPRITE_OFFSET_X; // スプライトのX座標を計算
           int y = spriteY + tileY - SPRITE_OFFSET_Y; // スプライトのY座標を計算
 
