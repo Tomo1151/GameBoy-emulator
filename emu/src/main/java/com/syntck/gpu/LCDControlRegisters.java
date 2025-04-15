@@ -14,11 +14,11 @@ public class LCDControlRegisters {
     this.enabled = true; // LCD & PPU enable
     this.windowTileMap = false; // Window tile map
     this.windowEnabled = false; // Window enable
-    this.tiles = false; // BG & Window tiles
+    this.tiles = true; // BG & Window tiles
     this.bgTileMap = false; // BG tile map
     this.objSize = false; // OBJ size
     this.objEnabled = false; // OBJ enable
-    this.bgWindowEnabled = false; // BG & window enable / priority
+    this.bgWindowEnabled = true; // BG & window enable / priority
   }
 
   public int convertToInt() {
