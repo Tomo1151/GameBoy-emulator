@@ -3,6 +3,7 @@ package com.syntck.gpu;
 public class GPU {
   public static final int SCREEN_WIDTH = 160;
   public static final int SCREEN_HEIGHT = 144;
+  public static final int BACKGROUND_SIZE = 256; // 背景の幅
   public static final int VRAM_BEGIN = 0x8000;
   public static final int VRAM_END   = 0x9FFF;
   public static final int VRAM_SIZE  = VRAM_END - VRAM_BEGIN + 1;
@@ -101,6 +102,7 @@ public class GPU {
 
   }
 
+  // MARK: drawFrame
   private void drawFrame() {
     // this.frameBuffer を全部書き換える
     for (int addr = 0x9800; addr <= 0x9BFF; addr++) {
@@ -116,13 +118,23 @@ public class GPU {
       int screenY = ((index) / 32) * Tile.TILE_LENGTH; // タイルのY座標の始点を計算
       // System.out.println("sx: " + screenX + ", sy: " + screenY);
 
-
+      // MARK: タイルの描画
       // System.out.println("Tile print");
       for (int tileX = 0; tileX < Tile.TILE_LENGTH; tileX++) {
         for (int tileY = 0; tileY < Tile.TILE_LENGTH; tileY++) {
           TilePixelValue pixel = tile.pixels[tileY][tileX]; // タイルのピクセル値を取得
           int x = screenX + tileX; // タイルのX座標を計算
           int y = screenY + tileY; // タイルのY座標を計算
+
+          if (y < this.scy) {
+            y += BACKGROUND_SIZE; // スクロールY座標より上のタイルは無視
+          }
+          if (x < this.scx) {
+            x += BACKGROUND_SIZE; // スクロールX座標より左のタイルは無視
+          }
+
+          y -= this.scy; // スクロールY座標を考慮
+          x -= this.scx; // スクロールX座標を考慮
 
           if (x >= SCREEN_WIDTH || y >= SCREEN_HEIGHT) continue; // 画面外のタイルは無視
 
@@ -145,7 +157,7 @@ public class GPU {
       // System.out.println();
     }
 
-    // スプライトの描画
+    // MARK: スプライトの描画
     for (int i = 0; i < this.sprites.length; i++) {
       int spriteX = this.sprites[i].x; // スプライトのX座標を計算
       int spriteY = this.sprites[i].y; // スプライトのY座標を計算
