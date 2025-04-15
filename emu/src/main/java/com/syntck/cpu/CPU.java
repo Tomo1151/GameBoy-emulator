@@ -12,8 +12,9 @@ public class CPU {
   public int pc; // プログラムカウンタ
   public int sp; // スタックポインタ
   public int cycles; // サイクル数
-  public int timerCounter;
-  private int divCounter;
+  public int clockSelect; // クロック選択
+  public int timerCounter; // タイマーカウンタ
+  private int divCounter; // DIVカウンタ
   public boolean interruptMasterEnable; // 割り込み許可フラグ
   private boolean halted; // HALTフラグ
   public boolean debug = false;
@@ -26,6 +27,7 @@ public class CPU {
     this.bus.clear();
     this.pc = 0x0000; // プログラムカウンタの初期値
     this.sp = 0xFFFF; // スタックポインタの初期値
+    this.clockSelect = 0; // クロック選択の初期値
     this.interruptMasterEnable = true;
     this.halted = false;
   }
@@ -37,6 +39,7 @@ public class CPU {
     this.sp = 0xFFFE; // スタックポインタの初期値
     this.timerCounter = 0;
     this.divCounter = 0;
+    this.clockSelect = 0; // クロック選択の初期値
     this.interruptMasterEnable = true;
     this.halted = false;
 
@@ -648,7 +651,7 @@ public class CPU {
     }
   }
 
-  // MARK: *** step() ***
+  // MARK: *** step ***
   public void step() {
     // if (this.halted) {
     //   updateTimers(1);
@@ -701,18 +704,21 @@ public class CPU {
     }
   }
 
+  // MARK: updateGraphics
   private void updateGraphics(int cycles) {
     if (this.bus.gpu.update(cycles)) {
         requestInterrupt(0x00); // V-Blank割り込み要求（ビット0）
     }
   }
 
+  // MARK: requestInterrupt
   private void requestInterrupt(int id) {
     int req = this.bus.readByte(0xFF0F);
     req |= id; // 割り込み要求をセット
     this.bus.writeByte(0xFF0F, req); // 割り込み要求を更新
   }
 
+  // MARK: handleDivRegister
   private void handleDivRegister(int cycles) {
     this.divCounter += cycles;
 
@@ -723,6 +729,7 @@ public class CPU {
     }
   }
 
+  // MARK: updateTimers
   private void updateTimers(int cycles) {
     final int CPU_CLOCK = 4194304; // 4194304Hz
     handleDivRegister(cycles);
@@ -751,6 +758,13 @@ public class CPU {
         throw new IllegalArgumentException("Invalid clock select: " + clockSelect);
     }
 
+    // タイマーコントロール
+    if (this.clockSelect != clockSelect) {
+      this.timerCounter = 0;
+      this.clockSelect = clockSelect;
+    }
+    
+
     this.timerCounter += cycles;
 
     while (this.timerCounter >= clockDivider) {
@@ -773,6 +787,7 @@ public class CPU {
     }
   }
 
+  // MARK: handleInterrupts
   private void handleInterrupts() {
     // 割り込み要求と有効フラグを取得
     int request = this.bus.readByte(0xFF0F);

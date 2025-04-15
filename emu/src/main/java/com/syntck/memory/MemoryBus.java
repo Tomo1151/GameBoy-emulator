@@ -52,15 +52,6 @@ public class MemoryBus {
       System.out.print((char) value); // 0xFF01はコンソールに出力する
     }
 
-    // タイマーコントロール
-    if (address == 0xFF07) {
-      int currentFreq = this.memory[0xFF07] & 0x03;
-      int newFreq = value & 0x03;
-      if (currentFreq != newFreq) {
-        this.cpu.timerCounter = 0;
-      }
-    }
-
     // DIVカウンタ
     if (address == 0xFF04) {
       this.memory[address] = 0;
