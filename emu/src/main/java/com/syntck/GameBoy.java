@@ -2,13 +2,18 @@ package com.syntck;
 
 import java.awt.Color;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.image.BufferedImage;
+import java.awt.image.DataBufferInt;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 
 import com.syntck.cartridge.Cartridge;
 
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.util.concurrent.TimeUnit;
 
 import com.syntck.cpu.CPU;
 import com.syntck.gpu.GPU;
@@ -28,23 +33,35 @@ public class GameBoy {
   }
 
   public void run() {
+    // 最後のフレーム更新時間
+    long lastFrameTime = System.nanoTime();
+    final long frameTimeNanos = 1_000_000_000 / 60; // 60FPS
+    
     while (true) {
-      // CPUのクロックサイクルを実行
-      this.cpu.step();
-
-      // try {
-      //   Thread.sleep(0, 1); // フレームレートに合わせてスリープ
-      // } catch (InterruptedException e) {
-      //   e.printStackTrace();
-      // }
-
-      // System.out.println("Status: " + String.format("0x%04X", this.cpu.bus.readByte(0xFF01)));
-      // System.out.println("LY: " + cpu.bus.gpu.ly);
-
+      // CPU実行
+      for (int i = 0; i < 70000 / 60; i++) { // 約1フレーム分のCPUサイクル
+        this.cpu.step();
+      }
+      
+      // フレーム更新条件
       if (this.cpu.bus.gpu.frameUpdated) {
-        this.gameBoyFrame.repaint();
+        // フレームバッファを更新
+        this.gameBoyFrame.panel.updateFrame();
         this.cpu.bus.gpu.frameUpdated = false;
-        // break;
+        
+        // フレームレート制御
+        long currentTime = System.nanoTime();
+        long elapsedTime = currentTime - lastFrameTime;
+        
+        // if (elapsedTime < frameTimeNanos) {
+        //   try {
+          //     TimeUnit.NANOSECONDS.sleep(frameTimeNanos - elapsedTime);
+          //   } catch (InterruptedException e) {
+        //     Thread.currentThread().interrupt();
+        //   }
+        // }
+        
+        lastFrameTime = System.nanoTime();
       }
     }
   }
@@ -58,36 +75,19 @@ class GameBoyFrame extends JFrame implements KeyListener {
 
   public Graphics g;
 
-  private GameBoyPanel gameBoyPanel;
+  public GameBoyPanel panel;
 
   GameBoyFrame(GPU gpu) {
-    this.gameBoyPanel = new GameBoyPanel(gpu);
-    add(gameBoyPanel); // Add the panel to the frame
+    this.panel = new GameBoyPanel(gpu);
+    add(panel); // Add the panel to the frame
 
     setTitle("Game Boy Emulator");
     setSize(SCREEN_WIDTH * FRAME_SCALE, SCREEN_HEIGHT * FRAME_SCALE);
     setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     addKeyListener(this);  // Added key listener to enable key events.
     setVisible(true);
-    this.gameBoyPanel.repaint();
+    this.panel.repaint();
   }
-
-  // public void repaint(Graphics g, int[] frames) {
-
-    // super.repaint();
-
-    // g = getContentPane().getGraphics();
-    // for (int y = 0; y < SCREEN_HEIGHT; y++) {
-    //   for (int x = 0; x < SCREEN_WIDTH; x++) {
-    //     int color = frames[y * SCREEN_WIDTH + x];
-
-    //     g.setColor(colors[color]);
-    //     g.fillRect(x * FRAME_SCALE, y * FRAME_SCALE, FRAME_SCALE, FRAME_SCALE);
-    //   }
-    // }
-    // g.dispose();
-  // }
-
 
   // キー入力処理
   @Override
@@ -109,40 +109,51 @@ class GameBoyFrame extends JFrame implements KeyListener {
 class GameBoyPanel extends JPanel {
   public static final int SCREEN_WIDTH = 160;
   public static final int SCREEN_HEIGHT = 144;
-  public static final int FRAME_RATE = 60; // 60 FPS
-  public static final int FRAME_SCALE = 3; // ウィンドウサイズを拡大する倍率
-  private final Color[] COLORS = {
-    new Color(232, 252, 204),
-    new Color(172, 212, 144),
-    new Color(84, 140, 112),
-    new Color(20, 44, 56),
-  };
-  private GPU gpu;
+  public static final int FRAME_SCALE = 3;
+  
+  // 描画用バッファ
+  private final BufferedImage frameBuffer;
+  private final GPU gpu;
 
   public GameBoyPanel(GPU gpu) {
     this.gpu = gpu;
     setPreferredSize(new java.awt.Dimension(SCREEN_WIDTH * FRAME_SCALE, SCREEN_HEIGHT * FRAME_SCALE));
+    
+    // Swingのダブルバッファリングを有効化
+    setDoubleBuffered(true);
+    
+    // バッファ画像を1回だけ作成
+    frameBuffer = new BufferedImage(
+        SCREEN_WIDTH, 
+        SCREEN_HEIGHT, 
+        BufferedImage.TYPE_INT_RGB);
+  }
+
+  // フレームバッファを更新するメソッド（GameBoyクラスから呼ばれる）
+  public void updateFrame() {
+    // GPUから最新のフレームデータを取得
+    int[][] frame = gpu.getFrames();
+    
+    // バッファの画像データを直接操作
+    int[] pixels = ((DataBufferInt) frameBuffer.getRaster().getDataBuffer()).getData();
+    
+    // フレームバッファを効率的に更新
+    for (int y = 0; y < SCREEN_HEIGHT; y++) {
+      for (int x = 0; x < SCREEN_WIDTH; x++) {
+        int[] rgb = frame[y * SCREEN_WIDTH + x];
+        pixels[y * SCREEN_WIDTH + x] = (rgb[0] << 16) | (rgb[1] << 8) | rgb[2];
+      }
+    }
+    
+    // Swingスレッド上で再描画をリクエスト
+    SwingUtilities.invokeLater(this::repaint);
   }
 
   @Override
   protected void paintComponent(Graphics g) {
     super.paintComponent(g);
-    // g.clearRect(0, 0, SCREEN_WIDTH * FRAME_SCALE, SCREEN_HEIGHT * FRAME_SCALE);
-
-    int[][] frame = gpu.getFrames(); // GPUからフレームを取得
-    for (int y = 0; y < SCREEN_HEIGHT; y++) {
-      for (int x = 0; x < SCREEN_WIDTH; x++) {
-        int[] color = frame[y * SCREEN_WIDTH + x]; // フレームの色を取得
-        // System.out.print(color + " ");
-        g.setColor(new Color(color[0], color[1], color[2])); // 色を設定
-        for (int i = 0; i < FRAME_SCALE; i++) {
-          for (int j = 0; j < FRAME_SCALE; j++) {
-            g.fillRect(x * FRAME_SCALE + i, y * FRAME_SCALE + j, FRAME_SCALE, FRAME_SCALE); // 拡大して描画
-          }
-        }
-      }
-      // System.out.println();
-    }
-    // g.dispose(); // グラフィックスオブジェクトを解放
+    
+    // 完成したバッファ画像を拡大して描画
+    g.drawImage(frameBuffer, 0, 0, SCREEN_WIDTH * FRAME_SCALE, SCREEN_HEIGHT * FRAME_SCALE, null);
   }
 }
