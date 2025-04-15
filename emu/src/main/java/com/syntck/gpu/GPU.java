@@ -7,9 +7,11 @@ public class GPU {
   public static final int VRAM_BEGIN = 0x8000;
   public static final int VRAM_END   = 0x9FFF;
   public static final int VRAM_SIZE  = VRAM_END - VRAM_BEGIN + 1;
-
+  
   public static final int SPRITE_OFFSET_X = 8; // スプライトのX座標オフセット
   public static final int SPRITE_OFFSET_Y = 16; // スプライトのY座標オフセット
+  public static final int WINDOW_OFFSET_X = 7; // ウィンドウのX座標オフセット
+  public static final int WINDOW_OFFSET_Y = 0; // ウィンドウのY座標オフセット
 
   // レジスタ
   public int ly; // 0xFF44 LYレジスタ (現在のスキャンラインのY座標)
@@ -118,7 +120,7 @@ public class GPU {
       int screenY = ((index) / 32) * Tile.TILE_LENGTH; // タイルのY座標の始点を計算
       // System.out.println("sx: " + screenX + ", sy: " + screenY);
 
-      // MARK: タイルの描画
+      // MARK: BGの描画
       // System.out.println("Tile print");
       for (int tileX = 0; tileX < Tile.TILE_LENGTH; tileX++) {
         for (int tileY = 0; tileY < Tile.TILE_LENGTH; tileY++) {
@@ -155,6 +157,58 @@ public class GPU {
         // System.out.println();
       }
       // System.out.println();
+    }
+
+    for (int addr = 0x9800; addr <= 0x9BFF; addr++) {
+      // System.out.println("addr: " + String.format("0x%04X", addr));
+      int vramAddr = addr - VRAM_BEGIN; // タイルのインデックスが保存されている先頭アドレスをVRAMのアドレスに変換
+      // System.out.println("vramAddr: " + String.format("0x%04X", vramAddr));
+      int index = vramAddr - 0x1800;
+      // System.out.println("index: " + String.format("0x%04X", index));
+      Tile tile = this.tiles[this.vram[vramAddr]]; // タイルを取得
+      // System.out.println("tile: " + tile);
+
+      int screenX = ((index) % 32) * Tile.TILE_LENGTH; // タイルのX座標の始点を計算
+      int screenY = ((index) / 32) * Tile.TILE_LENGTH; // タイルのY座標の始点を計算
+      // System.out.println("sx: " + screenX + ", sy: " + screenY);
+
+      // MARK: ウィンドウの描画
+      // System.out.println("Tile print");
+      if (this.controls.windowEnabled && this.wx <= 166 && this.wy <= 143) {
+        int wx = this.wx - WINDOW_OFFSET_X; // ウィンドウのX座標を計算
+        int wy = this.wy - WINDOW_OFFSET_Y; // ウィンドウのY座標を計算
+
+        for (int tileX = 0; tileX < Tile.TILE_LENGTH; tileX++) {
+          for (int tileY = 0; tileY < Tile.TILE_LENGTH; tileY++) {
+            TilePixelValue pixel = tile.pixels[tileY][tileX]; // タイルのピクセル値を取得
+            int x = screenX + tileX; // タイルのX座標を計算
+            int y = screenY + tileY; // タイルのY座標を計算
+
+            if (x < wx || y < wy) continue; // ウィンドウのX座標より左のタイルは無視
+
+            y -= this.wy; // ウィンドウY座標を考慮
+            x -= this.wx; // ウィンドウX座標を考慮
+
+            if (x >= SCREEN_WIDTH || y >= SCREEN_HEIGHT) continue; // 画面外のタイルは無視
+            
+            int[] color = new int[3];
+            if (pixel == TilePixelValue.Zero) {
+              color = new int[]{232, 252, 204}; // 黒
+            } else if (pixel == TilePixelValue.One) {
+              color = new int[]{172, 212, 144}; // ダークグレー
+            } else if (pixel == TilePixelValue.Two) {
+              color = new int[]{84, 140, 112}; // ライトグレー
+            } else if (pixel == TilePixelValue.Three) {
+              color = new int[]{20, 44, 56}; // 白
+            }
+
+            // System.out.print(pixelNum + " ");
+            this.frameBuffer[y * SCREEN_WIDTH + x] = color; // ピクセル値をフレームバッファに書き込む
+          }
+          // System.out.println();
+        }
+        // System.out.println();
+      }
     }
 
     // MARK: スプライトの描画
@@ -355,6 +409,10 @@ class Tile {
       {84, 140, 112}, // 0x02: ライトグレー
       {20, 44, 56}, // 0x03: 白
     };
+
+    if (pixelValue == null) {
+      pixelValue = TilePixelValue.Zero; // デフォルトは黒
+    }
 
     switch (pixelValue) {
       case Zero:
