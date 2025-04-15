@@ -63,6 +63,11 @@ public class MemoryBus {
       this.memory[address] = 0;
     }
 
+    // DMA転送
+    if (address == 0xFF46) {
+      handleDMATransfer(value); // DMA転送を処理する
+    }
+
     // OAM
     if (0xFE00 <= address && address <= 0xFE9F) {
       this.gpu.writeOAM(address, value); // OAMに書き込む
@@ -101,6 +106,13 @@ public class MemoryBus {
       throw new IllegalArgumentException("Address out of bounds: " + String.format("0x%04X", address));
     }
     return readByte(address) | readByte(address + 1) << 8; // Read a word from the specified address
+  }
+
+  public void handleDMATransfer(int value) {
+    int address = (value << 8) & 0xFFFF; // DMA転送のアドレスを計算
+    for (int i = 0; i < 0xA0; i++) {
+      this.writeByte(0xFE00 + i, this.readByte(address + i)); // OAMにDMA転送する
+    }
   }
 
   public void clear() {
