@@ -129,12 +129,12 @@ class GameBoyPanel extends JPanel {
     super.paintComponent(g);
     // g.clearRect(0, 0, SCREEN_WIDTH * FRAME_SCALE, SCREEN_HEIGHT * FRAME_SCALE);
 
-    int[] frame = gpu.getFrames(); // GPUからフレームを取得
+    int[][] frame = gpu.getFrames(); // GPUからフレームを取得
     for (int y = 0; y < SCREEN_HEIGHT; y++) {
       for (int x = 0; x < SCREEN_WIDTH; x++) {
-        int color = frame[y * SCREEN_WIDTH + x]; // フレームの色を取得
+        int[] color = frame[y * SCREEN_WIDTH + x]; // フレームの色を取得
         // System.out.print(color + " ");
-        g.setColor(COLORS[color]); // 色を設定
+        g.setColor(new Color(color[0], color[1], color[2])); // 色を設定
         for (int i = 0; i < FRAME_SCALE; i++) {
           for (int j = 0; j < FRAME_SCALE; j++) {
             g.fillRect(x * FRAME_SCALE + i, y * FRAME_SCALE + j, FRAME_SCALE, FRAME_SCALE); // 拡大して描画

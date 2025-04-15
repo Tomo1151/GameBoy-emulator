@@ -29,7 +29,7 @@ public class GPU {
   public Tile[] tiles = new Tile[384];
   public Sprite[] sprites = new Sprite[40]; // スプライトの数は40個
 
-  private int[] frameBuffer = new int[SCREEN_WIDTH * SCREEN_HEIGHT];
+  private int[][] frameBuffer = new int[SCREEN_WIDTH * SCREEN_HEIGHT][3];
   private int scanlineCounter;
 
   private int[] oam = new int[0xA0]; // OAM (Object Attribute Memory) (スプライトの情報を格納するメモリ)
@@ -126,19 +126,19 @@ public class GPU {
 
           if (x >= SCREEN_WIDTH || y >= SCREEN_HEIGHT) continue; // 画面外のタイルは無視
 
-          int pixelNum = 0;
+          int[] color = new int[3];
           if (pixel == TilePixelValue.Zero) {
-            pixelNum = 0; // 黒
+            color = new int[]{232, 252, 204}; // 黒
           } else if (pixel == TilePixelValue.One) {
-            pixelNum = 1; // ダークグレー
+            color = new int[]{172, 212, 144}; // ダークグレー
           } else if (pixel == TilePixelValue.Two) {
-            pixelNum = 2; // ライトグレー
+            color = new int[]{84, 140, 112}; // ライトグレー
           } else if (pixel == TilePixelValue.Three) {
-            pixelNum = 3; // 白
+            color = new int[]{20, 44, 56}; // 白
           }
 
           // System.out.print(pixelNum + " ");
-          this.frameBuffer[y * SCREEN_WIDTH + x] = pixelNum; // ピクセル値をフレームバッファに書き込む
+          this.frameBuffer[y * SCREEN_WIDTH + x] = color; // ピクセル値をフレームバッファに書き込む
         }
         // System.out.println();
       }
@@ -159,24 +159,14 @@ public class GPU {
       for (int tileX = 0; tileX < Tile.TILE_LENGTH; tileX++) {
         for (int tileY = 0; tileY < Tile.TILE_LENGTH; tileY++) {
           TilePixelValue pixel = tile.pixels[tileY][tileX]; // タイルのピクセル値を取得
+          int[] color = Tile.getColorFromPalette(pixel, (palette == 0) ? this.obp0 : this.obp1); // タイルの色を取得
           int x = spriteX + tileX - SPRITE_OFFSET_X; // スプライトのX座標を計算
           int y = spriteY + tileY - SPRITE_OFFSET_Y; // スプライトのY座標を計算
 
           if (x < 0 || y < 0 || x >= SCREEN_WIDTH || y >= SCREEN_HEIGHT) continue; // 画面外のタイルは無視
 
-          int pixelNum = 0;
-          if (pixel == TilePixelValue.Zero) {
-            pixelNum = 0; // 黒
-          } else if (pixel == TilePixelValue.One) {
-            pixelNum = 1; // ダークグレー
-          } else if (pixel == TilePixelValue.Two) {
-            pixelNum = 2; // ライトグレー
-          } else if (pixel == TilePixelValue.Three) {
-            pixelNum = 3; // 白
-          }
-
           // System.out.print(pixelNum + " ");
-          this.frameBuffer[y * SCREEN_WIDTH + x] = pixelNum; // ピクセル値をフレームバッファに書き込む
+          this.frameBuffer[y * SCREEN_WIDTH + x] = color; // ピクセル値をフレームバッファに書き込む
         }
         // System.out.println();
       }
@@ -184,7 +174,7 @@ public class GPU {
     }
   }
 
-  public int[] getFrames() {
+  public int[][] getFrames() {
     return this.frameBuffer;
   }
 
@@ -336,6 +326,28 @@ class Tile {
       }
     }
     return new Tile(pixels);
+  }
+
+  public static int[] getColorFromPalette(TilePixelValue pixelValue, int palette) {
+    int[][] colorTable = {
+      {232, 252, 204}, // 0x00: 黒
+      {172, 212, 144}, // 0x01: ダークグレー
+      {84, 140, 112}, // 0x02: ライトグレー
+      {20, 44, 56}, // 0x03: 白
+    };
+
+    switch (pixelValue) {
+      case Zero:
+        return colorTable[(palette & 0x03) >> 0]; // 黒
+      case One:
+        return colorTable[(palette & 0x0C) >> 2]; // ダークグレー
+      case Two:
+        return colorTable[(palette & 0x30) >> 4]; // ライトグレー
+      case Three:
+        return colorTable[(palette & 0xC0) >> 6]; // 白
+      default:
+        return new int[]{0, 0, 0};
+    }
   }
 }
 
