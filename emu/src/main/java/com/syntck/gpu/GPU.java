@@ -56,7 +56,8 @@ public class GPU {
       this.vram[i] = 0; // Initialize VRAM with 0
     }
     for (int i = 0; i < this.tiles.length; i++) {
-      this.tiles[i] = new Tile(new TilePixelValue[Tile.TILE_LENGTH][Tile.TILE_LENGTH]);
+      // this.tiles[i] = new Tile(new TilePixelValue[Tile.TILE_LENGTH][Tile.TILE_LENGTH]);
+      this.tiles[i] = new Tile();
     }
     for (int i = 0; i < this.oam.length; i++) {
       this.oam[i] = 0; // Initialize OAM with 0
@@ -107,17 +108,26 @@ public class GPU {
   // MARK: drawFrame
   private void drawFrame() {
     // this.frameBuffer を全部書き換える
-    for (int addr = 0x9800; addr <= 0x9BFF; addr++) {
+    int bgAddressStart = (this.controls.bgTileMap) ? 0x9C00 : 0x9800; // BGタイルマップのアドレスを決定
+    int bgAddressEnd = (this.controls.bgTileMap) ? 0x9FFF : 0x9BFF; // BGタイルマップのアドレスを決定
+
+    for (int addr = bgAddressStart; addr <= bgAddressEnd; addr++) {
       // System.out.println("addr: " + String.format("0x%04X", addr));
       int vramAddr = addr - VRAM_BEGIN; // タイルのインデックスが保存されている先頭アドレスをVRAMのアドレスに変換
       // System.out.println("vramAddr: " + String.format("0x%04X", vramAddr));
-      int index = vramAddr - 0x1800;
-      // System.out.println("index: " + String.format("0x%04X", index));
-      Tile tile = this.tiles[this.vram[vramAddr]]; // タイルを取得
-      // System.out.println("tile: " + tile);
+      int index = this.vram[vramAddr];
 
-      int screenX = ((index) % 32) * Tile.TILE_LENGTH; // タイルのX座標の始点を計算
-      int screenY = ((index) / 32) * Tile.TILE_LENGTH; // タイルのY座標の始点を計算
+      if (!this.controls.tiles && index < 128) {
+        // タイルのインデックスが0x00から0x7Fまでの範囲の場合、タイルのインデックスを-128して取得
+        index += 256; // タイルのインデックスを-128して取得
+      }
+
+      // System.out.println("index: " + String.format("0x%04X", index));
+      Tile tile = this.tiles[index]; // タイルを取得
+      // System.out.println("tile: " + tile);
+      int i = vramAddr - 0x1800; // タイルのインデックスを計算
+      int screenX = ((i) % 32) * Tile.TILE_LENGTH; // タイルのX座標の始点を計算
+      int screenY = ((i) / 32) * Tile.TILE_LENGTH; // タイルのY座標の始点を計算
       // System.out.println("sx: " + screenX + ", sy: " + screenY);
 
       // MARK: BGの描画
@@ -159,24 +169,36 @@ public class GPU {
       // System.out.println();
     }
 
-    for (int addr = 0x9800; addr <= 0x9BFF; addr++) {
-      // System.out.println("addr: " + String.format("0x%04X", addr));
-      int vramAddr = addr - VRAM_BEGIN; // タイルのインデックスが保存されている先頭アドレスをVRAMのアドレスに変換
-      // System.out.println("vramAddr: " + String.format("0x%04X", vramAddr));
-      int index = vramAddr - 0x1800;
-      // System.out.println("index: " + String.format("0x%04X", index));
-      Tile tile = this.tiles[this.vram[vramAddr]]; // タイルを取得
-      // System.out.println("tile: " + tile);
 
-      int screenX = ((index) % 32) * Tile.TILE_LENGTH; // タイルのX座標の始点を計算
-      int screenY = ((index) / 32) * Tile.TILE_LENGTH; // タイルのY座標の始点を計算
-      // System.out.println("sx: " + screenX + ", sy: " + screenY);
+    // MARK: ウィンドウの描画
+    if (this.controls.windowEnabled && this.wx <= 166 && this.wy <= 143) {
+      int wx = this.wx - WINDOW_OFFSET_X; // ウィンドウのX座標を計算
+      int wy = this.wy - WINDOW_OFFSET_Y; // ウィンドウのY座標を計算
 
-      // MARK: ウィンドウの描画
-      // System.out.println("Tile print");
-      if (this.controls.windowEnabled && this.wx <= 166 && this.wy <= 143) {
-        int wx = this.wx - WINDOW_OFFSET_X; // ウィンドウのX座標を計算
-        int wy = this.wy - WINDOW_OFFSET_Y; // ウィンドウのY座標を計算
+      int windowAddressStart = (this.controls.windowTileMap) ? 0x9C00 : 0x9800; // ウィンドウタイルマップのアドレスを決定
+      int windowAddressEnd = (this.controls.windowTileMap) ? 0x9FFF : 0x9BFF; // ウィンドウタイルマップのアドレスを決定
+
+      for (int addr = windowAddressStart; addr <= windowAddressEnd; addr++) {
+        // System.out.println("addr: " + String.format("0x%04X", addr));
+        int vramAddr = addr - VRAM_BEGIN; // タイルのインデックスが保存されている先頭アドレスをVRAMのアドレスに変換
+        // System.out.println("vramAddr: " + String.format("0x%04X", vramAddr));
+        int index = this.vram[vramAddr];
+
+        if (!this.controls.tiles && index < 128) {
+          // タイルのインデックスが0x00から0x7Fまでの範囲の場合、タイルのインデックスを-128して取得
+          index += 256; // タイルのインデックスを-128して取得
+        }
+
+        // System.out.println("index: " + String.format("0x%04X", index));
+        Tile tile = this.tiles[index]; // タイルを取得
+        // System.out.println("tile: " + tile);
+
+        int i = vramAddr - 0x1800; // タイルのインデックスを計算
+        int screenX = ((i) % 32) * Tile.TILE_LENGTH; // タイルのX座標の始点を計算
+        int screenY = ((i) / 32) * Tile.TILE_LENGTH; // タイルのY座標の始点を計算
+        // System.out.println("sx: " + screenX + ", sy: " + screenY);
+
+        // System.out.println("Tile print");
 
         for (int tileX = 0; tileX < Tile.TILE_LENGTH; tileX++) {
           for (int tileY = 0; tileY < Tile.TILE_LENGTH; tileY++) {
@@ -225,6 +247,9 @@ public class GPU {
       for (int tileX = 0; tileX < Tile.TILE_LENGTH; tileX++) {
         for (int tileY = 0; tileY < Tile.TILE_LENGTH; tileY++) {
           TilePixelValue pixel = tile.pixels[tileY][tileX]; // タイルのピクセル値を取得
+
+          if (pixel == TilePixelValue.Zero) continue; // ピクセル値が0の場合は無視
+
           int[] color = Tile.getColorFromPalette(pixel, (palette == 0) ? this.obp0 : this.obp1); // タイルの色を取得
 
           if (xFlip) {
@@ -384,23 +409,23 @@ class Tile {
   public static final int TILE_LENGTH = 8;
   public TilePixelValue[][] pixels = new TilePixelValue[TILE_LENGTH][TILE_LENGTH];
 
-  Tile(TilePixelValue[][] pixels) {
+  Tile() {
     for (int i = 0; i < TILE_LENGTH; i++) {
       for (int j = 0; j < TILE_LENGTH; j++) {
-        this.pixels[i][j] = pixels[i][j];
+        this.pixels[i][j] = TilePixelValue.Zero; // ピクセル値を初期化
       }
     }
   }
 
-  Tile emptyTile() {
-    TilePixelValue[][] pixels = new TilePixelValue[Tile.TILE_LENGTH][Tile.TILE_LENGTH];
-    for (int i = 0; i < Tile.TILE_LENGTH; i++) {
-      for (int j = 0; j < Tile.TILE_LENGTH; j++) {
-        pixels[i][j] = TilePixelValue.Zero;
-      }
-    }
-    return new Tile(pixels);
-  }
+  // Tile emptyTile() {
+  //   TilePixelValue[][] pixels = new TilePixelValue[Tile.TILE_LENGTH][Tile.TILE_LENGTH];
+  //   for (int i = 0; i < Tile.TILE_LENGTH; i++) {
+  //     for (int j = 0; j < Tile.TILE_LENGTH; j++) {
+  //       pixels[i][j] = TilePixelValue.Zero;
+  //     }
+  //   }
+  //   return new Tile(pixels);
+  // }
 
   public static int[] getColorFromPalette(TilePixelValue pixelValue, int palette) {
     int[][] colorTable = {
@@ -409,10 +434,6 @@ class Tile {
       {84, 140, 112}, // 0x02: ライトグレー
       {20, 44, 56}, // 0x03: 白
     };
-
-    if (pixelValue == null) {
-      pixelValue = TilePixelValue.Zero; // デフォルトは黒
-    }
 
     switch (pixelValue) {
       case Zero:
