@@ -21,6 +21,7 @@ public class Main {
       new Cartridge(ROM_PATH + "test/individual/10-bit ops.gb"),
       new Cartridge(ROM_PATH + "test/individual/11-op a,(hl).gb"),
       new Cartridge(ROM_PATH + "test/dmg-acid2.gb"),
+      new Cartridge(ROM_PATH + "test/bgbtest.gb"),
       new Cartridge(ROM_PATH + "tobu.gb"),
     };
 
