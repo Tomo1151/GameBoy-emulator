@@ -1,5 +1,7 @@
 package com.syntck.gpu;
 
+import static com.syntck.Functions.wrappingAdd;
+
 public class GPU {
   public static final int SCREEN_WIDTH = 160;
   public static final int SCREEN_HEIGHT = 144;
@@ -120,7 +122,7 @@ public class GPU {
 
       if (!this.controls.tiles && index < 128) {
         // タイルのインデックスが0x00から0x7Fまでの範囲の場合、タイルのインデックスを-128して取得
-        index = (index + 256) & 0xFF; // タイルのインデックスを-128して取得
+        index = wrappingAdd(index, 256); // タイルのインデックスを-128して取得
       }
 
       // System.out.println("index: " + String.format("0x%04X", index));
@@ -180,7 +182,7 @@ public class GPU {
 
         if (!this.controls.tiles && index < 128) {
           // タイルのインデックスが0x00から0x7Fまでの範囲の場合、タイルのインデックスを-128して取得
-          index = (index + 256) & 0xFF; // タイルのインデックスを-128して取得
+          index = wrappingAdd(index, 256); // タイルのインデックスを-128して取得
         }
 
         // System.out.println("index: " + String.format("0x%04X", index));
