@@ -11,7 +11,7 @@ public class GPU {
   public static final int SPRITE_OFFSET_X = 8; // スプライトのX座標オフセット
   public static final int SPRITE_OFFSET_Y = 16; // スプライトのY座標オフセット
   public static final int WINDOW_OFFSET_X = 7; // ウィンドウのX座標オフセット
-  public static final int WINDOW_OFFSET_Y = 16; // ウィンドウのY座標オフセット
+  public static final int WINDOW_OFFSET_Y = 0; // ウィンドウのY座標オフセット
 
   // レジスタ
   public int ly; // 0xFF44 LYレジスタ (現在のスキャンラインのY座標)
@@ -90,7 +90,7 @@ public class GPU {
         return PPUInterrupt.VBLANK; // VBlank割り込みを返す
       } else if (currentLine < 144) {
         // 画面描画中
-        this.drawScanline(currentLine);
+        this.drawScanline(currentLine-1);
         this.frameUpdated = true; // フレームが更新されたことを示すフラグをセット
         return PPUInterrupt.LCD; // LCD割り込みを返す
       } else if (currentLine > 153) {
@@ -110,6 +110,7 @@ public class GPU {
     // this.frameBuffer を全部書き換える
     int bgAddressStart = (this.controls.bgTileMap) ? 0x9C00 : 0x9800; // BGタイルマップのアドレスを決定
     int bgAddressEnd = (this.controls.bgTileMap) ? 0x9FFF : 0x9BFF; // BGタイルマップのアドレスを決定
+    // System.out.println(String.format("%04X..%04X", bgAddressStart, bgAddressEnd));
 
     for (int addr = bgAddressStart; addr <= bgAddressEnd; addr++) {
       // System.out.println("addr: " + String.format("0x%04X", addr));
@@ -125,7 +126,7 @@ public class GPU {
       // System.out.println("index: " + String.format("0x%04X", index));
       Tile tile = this.tiles[index]; // タイルを取得
       // System.out.println("tile: " + tile);
-      int i = vramAddr - 0x1800; // タイルのインデックスを計算
+      int i = addr - bgAddressStart; // タイルのインデックスを計算
       int screenX = ((i) % 32) * Tile.TILE_LENGTH; // タイルのX座標の始点を計算
       int screenY = ((i) / 32) * Tile.TILE_LENGTH; // タイルのY座標の始点を計算
       // System.out.println("sx: " + screenX + ", sy: " + screenY);
@@ -169,6 +170,8 @@ public class GPU {
       int windowAddressStart = (this.controls.windowTileMap) ? 0x9C00 : 0x9800; // ウィンドウタイルマップのアドレスを決定
       int windowAddressEnd = (this.controls.windowTileMap) ? 0x9FFF : 0x9BFF; // ウィンドウタイルマップのアドレスを決定
 
+      // System.out.println(String.format("%04X..%04X", windowAddressStart, windowAddressEnd));
+
       for (int addr = windowAddressStart; addr <= windowAddressEnd; addr++) {
         // System.out.println("addr: " + String.format("0x%04X", addr));
         int vramAddr = addr - VRAM_BEGIN; // タイルのインデックスが保存されている先頭アドレスをVRAMのアドレスに変換
@@ -184,7 +187,7 @@ public class GPU {
         Tile tile = this.tiles[index]; // タイルを取得
         // System.out.println("tile: " + tile);
 
-        int i = vramAddr - 0x1800; // タイルのインデックスを計算
+        int i = addr - windowAddressStart; // タイルのインデックスを計算
         int screenX = ((i) % 32) * Tile.TILE_LENGTH; // タイルのX座標の始点を計算
         int screenY = ((i) / 32) * Tile.TILE_LENGTH; // タイルのY座標の始点を計算
         // System.out.println("sx: " + screenX + ", sy: " + screenY);
@@ -228,31 +231,26 @@ public class GPU {
 
       for (int tileX = 0; tileX < Tile.TILE_LENGTH; tileX++) {
         for (int tileY = 0; tileY < Tile.TILE_LENGTH; tileY++) {
-          TilePixelValue pixel = tile.pixels[tileY][tileX]; // タイルのピクセル値を取得
-          int tx = tileX;
-          int ty = tileY;
-
-          if (pixel == TilePixelValue.Zero) continue; // ピクセル値が0の場合は無視
-
-          int[] color = Tile.getColorFromPalette(pixel, (palette == 0) ? this.obp0 : this.obp1); // タイルの色を取得
-
-          if (xFlip) {
-            tx = Tile.TILE_LENGTH - 1 - tileX; // X軸反転
-          }
-          if (yFlip) {
-            ty = Tile.TILE_LENGTH - 1 - tileY; // Y軸反転
-          }
-
-          int x = spriteX + tx - SPRITE_OFFSET_X; // スプライトのX座標を計算
-          int y = spriteY + ty - SPRITE_OFFSET_Y; // スプライトのY座標を計算
-
-          if (x < 0 || y < 0 || x >= SCREEN_WIDTH || y >= SCREEN_HEIGHT) continue; // 画面外のタイルは無視
-
-          // System.out.print(pixelNum + " ");
-          this.frameBuffer[y * SCREEN_WIDTH + x] = color; // ピクセル値をフレームバッファに書き込む
+          // まず反転を考慮したピクセル座標を計算
+          int pixelX = xFlip ? (Tile.TILE_LENGTH - 1 - tileX) : tileX;
+          int pixelY = yFlip ? (Tile.TILE_LENGTH - 1 - tileY) : tileY;
+          
+          // 反転座標からピクセルを取得
+          TilePixelValue pixel = tile.pixels[pixelY][pixelX];
+          
+          if (pixel == TilePixelValue.Zero) continue;
+          
+          int[] color = Tile.getColorFromPalette(pixel, (palette == 0) ? this.obp0 : this.obp1);
+          
+          // 画面上の表示位置は元の座標を使用
+          int x = spriteX + tileX - SPRITE_OFFSET_X;
+          int y = spriteY + tileY - SPRITE_OFFSET_Y;
+          
+          if (x < 0 || y < 0 || x >= SCREEN_WIDTH || y >= SCREEN_HEIGHT) continue;
+          
+          this.frameBuffer[y * SCREEN_WIDTH + x] = color;
         }
       }
-      // System.out.println();
     }
   }
 

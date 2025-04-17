@@ -24,7 +24,7 @@ public class Main {
       new Cartridge(ROM_PATH + "tobu.gb"),
     };
 
-    Cartridge cartridge = tests[13];
+    Cartridge cartridge = tests[12];
 
     // try {
     //   FileOutputStream fos = new FileOutputStream("logs/Log_0.txt");
