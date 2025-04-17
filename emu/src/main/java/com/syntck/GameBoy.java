@@ -17,6 +17,7 @@ import java.util.concurrent.TimeUnit;
 
 import com.syntck.cpu.CPU;
 import com.syntck.gpu.GPU;
+import com.syntck.joypad.Joypad;
 
 public class GameBoy {
   private GameBoyFrame gameBoyFrame;
@@ -26,7 +27,7 @@ public class GameBoy {
   public GameBoy(Cartridge cartridge) {
     this.cpu = new CPU(cartridge);
     this.cartridge = cartridge;
-    this.gameBoyFrame = new GameBoyFrame(this.cpu.bus.gpu);
+    this.gameBoyFrame = new GameBoyFrame(this.cpu.bus.gpu, this.cpu.bus.joypad);
     this.cartridge.dump(0x0104, 0x0133);
 
     this.run();
@@ -76,9 +77,11 @@ class GameBoyFrame extends JFrame implements KeyListener {
   public Graphics g;
 
   public GameBoyPanel panel;
+  private Joypad joypad;
 
-  GameBoyFrame(GPU gpu) {
+  GameBoyFrame(GPU gpu, Joypad joypad) {
     this.panel = new GameBoyPanel(gpu);
+    this.joypad = joypad;
     add(panel); // Add the panel to the frame
 
     setTitle("Game Boy Emulator");
@@ -97,13 +100,84 @@ class GameBoyFrame extends JFrame implements KeyListener {
         System.exit(0); // ESCキーで終了
         break;
       }
+      case KeyEvent.VK_UP: {
+        joypad.buttonUp = true; // 上ボタンを押す
+        break;
+      }
+      case KeyEvent.VK_DOWN: {
+        joypad.buttonDown = true; // 下ボタンを押す
+        break;
+      }
+      case KeyEvent.VK_LEFT: {
+        joypad.buttonLeft = true; // 左ボタンを押す
+        break;
+      }
+      case KeyEvent.VK_RIGHT: {
+        joypad.buttonRight = true; // 右ボタンを押す
+        break;
+      }
+      case KeyEvent.VK_A: {
+        joypad.buttonA = true; // Aボタンを押す
+        break;
+      }
+      case KeyEvent.VK_B: {
+        joypad.buttonB = true; // Bボタンを押す
+        break;
+      }
+      case KeyEvent.VK_ENTER: {
+        joypad.buttonStart = true; // STARTボタンを押す
+        break;
+      }
+      case KeyEvent.VK_BACK_SPACE: {
+        joypad.buttonSelect = true; // SELECTボタンを押す
+        break;
+      }
      }
   }
 
   @Override
   public void keyTyped(KeyEvent e) {}
   @Override
-  public void keyReleased(KeyEvent e) {}
+  public void keyReleased(KeyEvent e) {
+    switch (e.getKeyCode()) {
+      case KeyEvent.VK_ESCAPE: {
+        System.exit(0); // ESCキーで終了
+        break;
+      }
+      case KeyEvent.VK_UP: {
+        joypad.buttonUp = false; // 上ボタンを押す
+        break;
+      }
+      case KeyEvent.VK_DOWN: {
+        joypad.buttonDown = false; // 下ボタンを押す
+        break;
+      }
+      case KeyEvent.VK_LEFT: {
+        joypad.buttonLeft = false; // 左ボタンを押す
+        break;
+      }
+      case KeyEvent.VK_RIGHT: {
+        joypad.buttonRight = false; // 右ボタンを押す
+        break;
+      }
+      case KeyEvent.VK_A: {
+        joypad.buttonA = false; // Aボタンを押す
+        break;
+      }
+      case KeyEvent.VK_B: {
+        joypad.buttonB = false; // Bボタンを押す
+        break;
+      }
+      case KeyEvent.VK_ENTER: {
+        joypad.buttonStart = false; // STARTボタンを押す
+        break;
+      }
+      case KeyEvent.VK_BACK_SPACE: {
+        joypad.buttonSelect = false; // SELECTボタンを押す
+        break;
+      }
+     }
+  }
 }
 
 class GameBoyPanel extends JPanel {

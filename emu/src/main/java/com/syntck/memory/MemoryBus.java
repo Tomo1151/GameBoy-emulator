@@ -2,6 +2,7 @@ package com.syntck.memory;
 import com.syntck.cpu.CPU;
 import com.syntck.gpu.GPU;
 import com.syntck.cartridge.Cartridge;
+import com.syntck.joypad.Joypad;
 
 public class MemoryBus {
   public static final int MEMORY_SIZE = 0xFFFF; // 64KB of memory
@@ -9,11 +10,13 @@ public class MemoryBus {
   public CPU cpu; // CPU instance
   public GPU gpu; // GPU instance
   public Cartridge cartridge; // Cartridge instance
+  public Joypad joypad; // Joypad instance
 
   public MemoryBus(CPU cpu, Cartridge cartridge) {
     this.cpu = cpu; // Initialize the CPU instance
     this.gpu = new GPU(); // Initialize the GPU instance
     this.cartridge = cartridge; // Initialize the cartridge instance
+    this.joypad = new Joypad(); // Initialize the joypad instance
   }
 
   public int readByte(int address) {
@@ -68,6 +71,10 @@ public class MemoryBus {
     } else if (GPU.VRAM_BEGIN <= address && address <= GPU.VRAM_END) {
       return this.gpu.readVRAM(address - GPU.VRAM_BEGIN); // アドレスがVRAMの範囲内の場合、GPUから読み取る
     }
+    if (address == 0xFF00) {
+      return this.joypad.read(); // Joypadから読み取る
+    }
+
     return memory[address];
   }
 
@@ -133,6 +140,11 @@ public class MemoryBus {
       this.gpu.writeVRAM(address - GPU.VRAM_BEGIN, value); // アドレスがVRAMの範囲内の場合、GPUに書き込む
       return;
     }
+
+    if (address == 0xFF00) {
+      this.joypad.write(value); // Joypadに書き込む
+    }
+
     memory[address] = value; // Write a byte to the specified address
   }
 
