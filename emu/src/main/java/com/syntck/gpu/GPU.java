@@ -11,7 +11,7 @@ public class GPU {
   public static final int SPRITE_OFFSET_X = 8; // スプライトのX座標オフセット
   public static final int SPRITE_OFFSET_Y = 16; // スプライトのY座標オフセット
   public static final int WINDOW_OFFSET_X = 7; // ウィンドウのX座標オフセット
-  public static final int WINDOW_OFFSET_Y = 0; // ウィンドウのY座標オフセット
+  public static final int WINDOW_OFFSET_Y = 16; // ウィンドウのY座標オフセット
 
   // レジスタ
   public int ly; // 0xFF44 LYレジスタ (現在のスキャンラインのY座標)
@@ -119,7 +119,7 @@ public class GPU {
 
       if (!this.controls.tiles && index < 128) {
         // タイルのインデックスが0x00から0x7Fまでの範囲の場合、タイルのインデックスを-128して取得
-        index += 256; // タイルのインデックスを-128して取得
+        index = (index + 256) & 0xFF; // タイルのインデックスを-128して取得
       }
 
       // System.out.println("index: " + String.format("0x%04X", index));
@@ -139,10 +139,10 @@ public class GPU {
           int y = screenY + tileY; // タイルのY座標を計算
 
           if (y < this.scy) {
-            y += BACKGROUND_SIZE; // スクロールY座標より上のタイルは無視
+            y += BACKGROUND_SIZE-1; // スクロールY座標より上のタイルは無視
           }
           if (x < this.scx) {
-            x += BACKGROUND_SIZE; // スクロールX座標より左のタイルは無視
+            x += BACKGROUND_SIZE-1; // スクロールX座標より左のタイルは無視
           }
 
           y -= this.scy; // スクロールY座標を考慮
@@ -150,16 +150,7 @@ public class GPU {
 
           if (x >= SCREEN_WIDTH || y >= SCREEN_HEIGHT) continue; // 画面外のタイルは無視
 
-          int[] color = new int[3];
-          if (pixel == TilePixelValue.Zero) {
-            color = new int[]{232, 252, 204}; // 黒
-          } else if (pixel == TilePixelValue.One) {
-            color = new int[]{172, 212, 144}; // ダークグレー
-          } else if (pixel == TilePixelValue.Two) {
-            color = new int[]{84, 140, 112}; // ライトグレー
-          } else if (pixel == TilePixelValue.Three) {
-            color = new int[]{20, 44, 56}; // 白
-          }
+          int[] color = Tile.getColorFromPalette(pixel, this.bgp); // タイルの色を取得
 
           // System.out.print(pixelNum + " ");
           this.frameBuffer[y * SCREEN_WIDTH + x] = color; // ピクセル値をフレームバッファに書き込む
@@ -186,7 +177,7 @@ public class GPU {
 
         if (!this.controls.tiles && index < 128) {
           // タイルのインデックスが0x00から0x7Fまでの範囲の場合、タイルのインデックスを-128して取得
-          index += 256; // タイルのインデックスを-128して取得
+          index = (index + 256) & 0xFF; // タイルのインデックスを-128して取得
         }
 
         // System.out.println("index: " + String.format("0x%04X", index));
@@ -208,21 +199,12 @@ public class GPU {
 
             if (x < wx || y < wy) continue; // ウィンドウのX座標より左のタイルは無視
 
-            y -= this.wy; // ウィンドウY座標を考慮
-            x -= this.wx; // ウィンドウX座標を考慮
+            y -= wy; // ウィンドウY座標を考慮
+            x -= wx; // ウィンドウX座標を考慮
 
             if (x >= SCREEN_WIDTH || y >= SCREEN_HEIGHT) continue; // 画面外のタイルは無視
-            
-            int[] color = new int[3];
-            if (pixel == TilePixelValue.Zero) {
-              color = new int[]{232, 252, 204}; // 黒
-            } else if (pixel == TilePixelValue.One) {
-              color = new int[]{172, 212, 144}; // ダークグレー
-            } else if (pixel == TilePixelValue.Two) {
-              color = new int[]{84, 140, 112}; // ライトグレー
-            } else if (pixel == TilePixelValue.Three) {
-              color = new int[]{20, 44, 56}; // 白
-            }
+
+            int[] color = Tile.getColorFromPalette(pixel, this.bgp); // タイルの色を取得
 
             // System.out.print(pixelNum + " ");
             this.frameBuffer[y * SCREEN_WIDTH + x] = color; // ピクセル値をフレームバッファに書き込む
@@ -239,7 +221,7 @@ public class GPU {
       int spriteY = this.sprites[i].y; // スプライトのY座標を計算
       Tile tile = this.tiles[this.sprites[i].tileIndex]; // スプライトのタイルを取得
       int attributes = this.sprites[i].attributes; // スプライトの属性を取得
-      int priority = (attributes & 0x80) >> 7; // スプライトの優先度を取得
+      boolean priority = (attributes & 0x80) != 0; // スプライトの優先度を取得
       boolean yFlip = (attributes & 0x40) != 0; // Y軸反転フラグ
       boolean xFlip = (attributes & 0x20) != 0; // X軸反転フラグ
       int palette = (attributes & 0x10) >> 4; // パレット番号
@@ -247,27 +229,28 @@ public class GPU {
       for (int tileX = 0; tileX < Tile.TILE_LENGTH; tileX++) {
         for (int tileY = 0; tileY < Tile.TILE_LENGTH; tileY++) {
           TilePixelValue pixel = tile.pixels[tileY][tileX]; // タイルのピクセル値を取得
+          int tx = tileX;
+          int ty = tileY;
 
           if (pixel == TilePixelValue.Zero) continue; // ピクセル値が0の場合は無視
 
           int[] color = Tile.getColorFromPalette(pixel, (palette == 0) ? this.obp0 : this.obp1); // タイルの色を取得
 
           if (xFlip) {
-            tileX = Tile.TILE_LENGTH - 1 - tileX; // X軸反転
+            tx = Tile.TILE_LENGTH - 1 - tileX; // X軸反転
           }
           if (yFlip) {
-            tileY = Tile.TILE_LENGTH - 1 - tileY; // Y軸反転
+            ty = Tile.TILE_LENGTH - 1 - tileY; // Y軸反転
           }
 
-          int x = spriteX + tileX - SPRITE_OFFSET_X; // スプライトのX座標を計算
-          int y = spriteY + tileY - SPRITE_OFFSET_Y; // スプライトのY座標を計算
+          int x = spriteX + tx - SPRITE_OFFSET_X; // スプライトのX座標を計算
+          int y = spriteY + ty - SPRITE_OFFSET_Y; // スプライトのY座標を計算
 
           if (x < 0 || y < 0 || x >= SCREEN_WIDTH || y >= SCREEN_HEIGHT) continue; // 画面外のタイルは無視
 
           // System.out.print(pixelNum + " ");
           this.frameBuffer[y * SCREEN_WIDTH + x] = color; // ピクセル値をフレームバッファに書き込む
         }
-        // System.out.println();
       }
       // System.out.println();
     }
