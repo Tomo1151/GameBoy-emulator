@@ -16,8 +16,8 @@ import java.awt.event.KeyListener;
 import java.util.concurrent.TimeUnit;
 
 import com.syntck.cpu.CPU;
-import com.syntck.gpu.GPU;
 import com.syntck.joypad.Joypad;
+import com.syntck.ppu.PPU;
 
 public class GameBoy {
   private GameBoyFrame gameBoyFrame;
@@ -79,7 +79,7 @@ class GameBoyFrame extends JFrame implements KeyListener {
   public GameBoyPanel panel;
   private Joypad joypad;
 
-  GameBoyFrame(GPU gpu, Joypad joypad) {
+  GameBoyFrame(PPU gpu, Joypad joypad) {
     this.panel = new GameBoyPanel(gpu);
     this.joypad = joypad;
     add(panel); // Add the panel to the frame
@@ -187,9 +187,9 @@ class GameBoyPanel extends JPanel {
   
   // 描画用バッファ
   private final BufferedImage frameBuffer;
-  private final GPU gpu;
+  private final PPU gpu;
 
-  public GameBoyPanel(GPU gpu) {
+  public GameBoyPanel(PPU gpu) {
     this.gpu = gpu;
     setPreferredSize(new java.awt.Dimension(SCREEN_WIDTH * FRAME_SCALE, SCREEN_HEIGHT * FRAME_SCALE));
     

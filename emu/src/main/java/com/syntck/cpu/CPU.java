@@ -4,9 +4,8 @@ import static com.syntck.Functions.*;
 
 import com.syntck.Functions.OverflowingResult;
 import com.syntck.memory.MemoryBus;
+import com.syntck.ppu.PPUInterrupt;
 import com.syntck.cartridge.Cartridge;
-
-import com.syntck.gpu.PPUInterrupt;
 
 public class CPU {
   public Registers registers; // CPU レジスタ

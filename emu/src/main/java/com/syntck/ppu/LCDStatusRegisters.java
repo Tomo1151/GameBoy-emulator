@@ -1,4 +1,4 @@
-package com.syntck.gpu;
+package com.syntck.ppu;
 
 public class LCDStatusRegisters { // FF41
   public boolean lycIntSelect; // LYC=LY interrupt select

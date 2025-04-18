@@ -1,4 +1,4 @@
-package com.syntck.gpu;
+package com.syntck.ppu;
 
 public enum PPUInterrupt {
   NONE,

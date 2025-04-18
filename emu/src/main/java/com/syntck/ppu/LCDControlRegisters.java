@@ -1,4 +1,4 @@
-package com.syntck.gpu;
+package com.syntck.ppu;
 
 public class LCDControlRegisters {
   public boolean enabled; // LCD & PPU enable

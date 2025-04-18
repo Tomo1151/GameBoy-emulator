@@ -1,8 +1,8 @@
-package com.syntck.gpu;
+package com.syntck.ppu;
 
 import static com.syntck.Functions.wrappingAdd;
 
-public class GPU {
+public class PPU {
   public static final int SCREEN_WIDTH = 160;
   public static final int SCREEN_HEIGHT = 144;
   public static final int BACKGROUND_SIZE = 256; // 背景の幅
@@ -39,7 +39,7 @@ public class GPU {
 
   private int[] oam = new int[0xA0]; // OAM (Object Attribute Memory) (スプライトの情報を格納するメモリ)
 
-  public GPU() {
+  public PPU() {
     this.vram = new int[VRAM_SIZE];
     this.controls = new LCDControlRegisters(); // LCD制御レジスタの初期化
     this.status = new LCDStatusRegisters(); // LCDステータスレジスタの初期化

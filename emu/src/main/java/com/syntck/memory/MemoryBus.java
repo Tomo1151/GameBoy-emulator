@@ -1,20 +1,20 @@
 package com.syntck.memory;
 import com.syntck.cpu.CPU;
-import com.syntck.gpu.GPU;
 import com.syntck.cartridge.Cartridge;
 import com.syntck.joypad.Joypad;
+import com.syntck.ppu.PPU;
 
 public class MemoryBus {
   public static final int MEMORY_SIZE = 0xFFFF; // 64KB of memory
   public int[] memory = new int[MEMORY_SIZE+1]; // Memory array
   public CPU cpu; // CPU instance
-  public GPU gpu; // GPU instance
+  public PPU gpu; // GPU instance
   public Cartridge cartridge; // Cartridge instance
   public Joypad joypad; // Joypad instance
 
   public MemoryBus(CPU cpu, Cartridge cartridge) {
     this.cpu = cpu; // Initialize the CPU instance
-    this.gpu = new GPU(); // Initialize the GPU instance
+    this.gpu = new PPU(); // Initialize the GPU instance
     this.cartridge = cartridge; // Initialize the cartridge instance
     this.joypad = new Joypad(); // Initialize the joypad instance
   }
@@ -68,8 +68,8 @@ public class MemoryBus {
       return this.gpu.ly; // LYレジスタの値を返す
     } else if (address == 0xFF45) {
       return this.gpu.lyc; // LYCレジスタの値を返す
-    } else if (GPU.VRAM_BEGIN <= address && address <= GPU.VRAM_END) {
-      return this.gpu.readVRAM(address - GPU.VRAM_BEGIN); // アドレスがVRAMの範囲内の場合、GPUから読み取る
+    } else if (PPU.VRAM_BEGIN <= address && address <= PPU.VRAM_END) {
+      return this.gpu.readVRAM(address - PPU.VRAM_BEGIN); // アドレスがVRAMの範囲内の場合、GPUから読み取る
     }
     if (address == 0xFF00) {
       return this.joypad.read(); // Joypadから読み取る
@@ -136,8 +136,8 @@ public class MemoryBus {
       this.gpu.lyc = value; // LYCレジスタに値を設定
     } else if (address == 0xFF44) {
       throw new UnsupportedOperationException("LYレジスタへの書き込みが発生しました"); // LYレジスタには書き込まない
-    } else if (GPU.VRAM_BEGIN <= address && address <= GPU.VRAM_END) {
-      this.gpu.writeVRAM(address - GPU.VRAM_BEGIN, value); // アドレスがVRAMの範囲内の場合、GPUに書き込む
+    } else if (PPU.VRAM_BEGIN <= address && address <= PPU.VRAM_END) {
+      this.gpu.writeVRAM(address - PPU.VRAM_BEGIN, value); // アドレスがVRAMの範囲内の場合、GPUに書き込む
       return;
     }
 
