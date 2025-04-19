@@ -7,6 +7,7 @@ import java.awt.image.DataBufferInt;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
+import java.util.concurrent.TimeUnit;
 
 import com.syntck.cartridge.Cartridge;
 
@@ -54,8 +55,8 @@ public class GameBoy {
         
         // if (elapsedTime < frameTimeNanos) {
         //   try {
-          //     TimeUnit.NANOSECONDS.sleep(frameTimeNanos - elapsedTime);
-          //   } catch (InterruptedException e) {
+        //       TimeUnit.NANOSECONDS.sleep(frameTimeNanos - elapsedTime);
+        //     } catch (InterruptedException e) {
         //     Thread.currentThread().interrupt();
         //   }
         // }

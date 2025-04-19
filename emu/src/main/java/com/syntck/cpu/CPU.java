@@ -696,8 +696,8 @@ public class CPU {
       // if (this.debug) this.registers.f.dump();
 
     } else if (this.halted) {
-      updateTimers(1);
-      updateGraphics(1);
+      updateTimers(4);
+      updateGraphics(4);
       handleInterrupts();
     } else {
       // Handle invalid instruction
@@ -711,10 +711,10 @@ public class CPU {
 
     switch (interrupt) {
       case VBLANK:
-        requestInterrupt(0x00); // V-Blank割り込み要求（ビット0）
+        requestInterrupt(0x01); // V-Blank割り込み要求（ビット0）
         break;
       case LCD:
-        requestInterrupt(0x01); // LCD [LYC=LY割り込み要求]（ビット1）
+        requestInterrupt(0x02); // LCD [LYC=LY割り込み要求]（ビット1）
         break;
       default:
         break;
@@ -834,6 +834,9 @@ public class CPU {
                 case 3: this.pc = 0x0058; break; // Serial
                 case 4: this.pc = 0x0060; break; // Joypad
             }
+
+            updateTimers(5);
+            updateGraphics(5);
             return; // 優先度の高い割り込みを1つだけ処理
         }
     }
