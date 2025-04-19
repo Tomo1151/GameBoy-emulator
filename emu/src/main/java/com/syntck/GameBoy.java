@@ -85,7 +85,8 @@ class GameBoyFrame extends JFrame implements KeyListener {
     add(panel); // Add the panel to the frame
 
     setTitle("Game Boy Emulator");
-    setSize(SCREEN_WIDTH * FRAME_SCALE, SCREEN_HEIGHT * FRAME_SCALE);
+    panel.setPreferredSize(new java.awt.Dimension(SCREEN_WIDTH * FRAME_SCALE, SCREEN_HEIGHT * FRAME_SCALE));
+    pack(); // Pack the frame to fit the preferred size
     setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     addKeyListener(this);  // Added key listener to enable key events.
     setVisible(true);
@@ -191,10 +192,10 @@ class GameBoyPanel extends JPanel {
 
   public GameBoyPanel(PPU gpu) {
     this.gpu = gpu;
-    setPreferredSize(new java.awt.Dimension(SCREEN_WIDTH * FRAME_SCALE, SCREEN_HEIGHT * FRAME_SCALE));
+    // setSize(new java.awt.Dimension(SCREEN_WIDTH * FRAME_SCALE, SCREEN_HEIGHT * FRAME_SCALE));
     
     // Swingのダブルバッファリングを有効化
-    setDoubleBuffered(true);
+    // setDoubleBuffered(true);
     
     // バッファ画像を1回だけ作成
     frameBuffer = new BufferedImage(
