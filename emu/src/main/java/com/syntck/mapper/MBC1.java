@@ -131,16 +131,23 @@ public class MBC1 implements Mapper {
       this.mode = value; // モードを設定
     }
     if (0xA000 <= address && address <= 0xBFFF) {
-      if (!this.ramEnabled) return;
+      if (!this.ramEnabled || this.ram == null || this.ramSize == 0) return;
+
       if (this.mode == 0x00) {
-        this.ram[(address - 0xA000)] = value;
+        int index = address - 0xA000;
+        if (index < 0 || index >= this.ram.length) return; // 範囲チェック
+        this.ram[index] = value;
       } else {
         if (this.isBigRAM) {
           int bank = (this.secondaryBank & 0x03);
-          int addr = address + (bank * 0x2000); // バンク番号を考慮してアドレスを計算
-          this.ram[addr - 0xA000] = value; // RAMのデータを読み取る
+          int addr = address + (bank * 0x2000);
+          int index = addr - 0xA000;
+          if (index < 0 || index >= this.ram.length) return; // 範囲チェック
+          this.ram[index] = value;
         } else {
-          this.ram[address - 0xA000] = value; // RAMのデータを書き込む
+          int index = address - 0xA000;
+          if (index < 0 || index >= this.ram.length) return; // 範囲チェック
+          this.ram[index] = value;
         }
       }
     }
