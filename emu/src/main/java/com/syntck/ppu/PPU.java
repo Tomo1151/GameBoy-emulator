@@ -1,6 +1,7 @@
 package com.syntck.ppu;
 
 import static com.syntck.Functions.wrappingAdd;
+import static com.syntck.Functions.wrappingSub;
 
 public class PPU {
   public static final int SCREEN_WIDTH = 160;
@@ -88,11 +89,11 @@ public class PPU {
       if (currentLine == 144) {
         // VBlank開始
         // VBlankフラグをセット
-        this.drawFrame();
+        // this.drawFrame();
         return PPUInterrupt.VBLANK; // VBlank割り込みを返す
       } else if (currentLine < 144) {
         // 画面描画中
-        this.drawScanline(currentLine-1);
+        // this.drawScanline(currentLine-1);
         this.frameUpdated = true; // フレームが更新されたことを示すフラグをセット
         return PPUInterrupt.LCD; // LCD割り込みを返す
       } else if (currentLine > 153) {
@@ -103,8 +104,62 @@ public class PPU {
     return interrupt; // 割り込みを返す
   }
 
+  // MARK: drawScanline
   private void drawScanline(int scanline) {
+    drawBackgroundLine(scanline); // 背景の描画
+    drawWindowLine(scanline); // ウィンドウの描画
+    // drawSpritesLine(scanline); // スプライトの描画
+    drawSprites();
+  }
 
+  private void drawBackgroundLine(int scanline) {
+    /*  1. どこを描くのか割り出す
+        x = this.scx, y = this.scy + scanline
+
+        2. 何列目を描くのか割り出す
+        row = y / 8
+
+        3. そのタイルの何行目を描くのか割り出す
+        column = y % 8
+
+        4. そのピクセルのデータを取得・描画する
+        xからSCREEN_WIDTHだけ繰り返す
+    */
+    if (this.controls.bgWindowEnabled) {
+      int startAddress = ((this.controls.bgTileMap) ? 0x9C00 : 0x9800) - VRAM_BEGIN; // タイルマップの先頭アドレスをVRAMのアドレスに変換
+      // int endAddress = (this.controls.bgTileMap) ? 0x9FFF : 0x9BFF;
+
+      int originX = this.scx;
+      int originY = wrappingAdd(this.scy, scanline); // スクロールY座標を考慮
+      int row = originY / 8; // タイルの行を計算
+
+      int offset = row * 32; // タイルのオフセットを計算
+
+      int srcY = originY % 8; // タイルのY座標を計算
+
+
+      for (int x = 0; x < SCREEN_WIDTH; x++) {
+        int srcX = wrappingAdd(originX, x);
+        int destY = scanline;
+        int dextX = x;
+
+        int vramIndex = offset + (wrappingAdd(originX, x)) / 8; // タイルのインデックスを計算
+
+        // タイルマップの取得
+        int tileIndex = this.vram[startAddress + vramIndex];
+
+        int index = tileIndex; // タイルのインデックスを取得
+        if (!this.controls.tiles && index < 128) {
+          // タイルのインデックスが0x00から0x7Fまでの範囲の場合、タイルのインデックスを-128して取得
+          index = wrappingAdd(index, 256); // タイルのインデックスを-128して取得
+        }
+
+        Tile tile = this.tiles[index]; // タイルを取得
+        TilePixelValue pixel = tile.pixels[srcY % 8][srcX % 8]; // タイルのピクセル値を取得
+        int[] color = Tile.getColorFromPalette(pixel, this.bgp); // タイルの色を取得
+        this.frameBuffer[destY * SCREEN_WIDTH + dextX] = color; // ピクセル値をフレームバッファに書き込む
+      }
+    }
   }
 
   // MARK: drawBackground
@@ -155,121 +210,110 @@ public class PPU {
     }
   }
 
-  // MARK: drawFrame
-  private void drawFrame() {
-    // // this.frameBuffer を全部書き換える
-    // int bgAddressStart = (this.controls.bgTileMap) ? 0x9C00 : 0x9800; // BGタイルマップのアドレスを決定
-    // int bgAddressEnd = (this.controls.bgTileMap) ? 0x9FFF : 0x9BFF; // BGタイルマップのアドレスを決定
-    // // System.out.println(String.format("%04X..%04X", bgAddressStart, bgAddressEnd));
 
-    // for (int addr = bgAddressStart; addr <= bgAddressEnd; addr++) {
-    //   // System.out.println("addr: " + String.format("0x%04X", addr));
-    //   int vramAddr = addr - VRAM_BEGIN; // タイルのインデックスが保存されている先頭アドレスをVRAMのアドレスに変換
-    //   // System.out.println("vramAddr: " + String.format("0x%04X", vramAddr));
-    //   int index = this.vram[vramAddr];
+  private void drawWindowLine(int scanline) {
+    if (!this.controls.windowEnabled || this.wx > 166 || this.wy > 143) return; // ウィンドウが無効な場合は何もしない
 
-    //   if (!this.controls.tiles && index < 128) {
-    //     // タイルのインデックスが0x00から0x7Fまでの範囲の場合、タイルのインデックスを-128して取得
-    //     index = wrappingAdd(index, 256); // タイルのインデックスを-128して取得
-    //   }
+    if (this.wy > scanline) return; // ウィンドウY座標より上のタイルは無視
 
-    //   // System.out.println("index: " + String.format("0x%04X", index));
-    //   Tile tile = this.tiles[index]; // タイルを取得
-    //   // System.out.println("tile: " + tile);
-    //   int i = addr - bgAddressStart; // タイルのインデックスを計算
-    //   int screenX = ((i) % 32) * Tile.TILE_LENGTH; // タイルのX座標の始点を計算
-    //   int screenY = ((i) / 32) * Tile.TILE_LENGTH; // タイルのY座標の始点を計算
-    //   // System.out.println("sx: " + screenX + ", sy: " + screenY);
+    int startAddress = ((this.controls.windowTileMap) ? 0x9C00 : 0x9800) - VRAM_BEGIN; // タイルマップの先頭アドレスをVRAMのアドレスに変換
 
-    //   // MARK: BGの描画
-    //   // System.out.println("Tile print");
-    //   for (int tileX = 0; tileX < Tile.TILE_LENGTH; tileX++) {
-    //     for (int tileY = 0; tileY < Tile.TILE_LENGTH; tileY++) {
-    //       TilePixelValue pixel = tile.pixels[tileY][tileX]; // タイルのピクセル値を取得
-    //       int x = screenX + tileX; // タイルのX座標を計算
-    //       int y = screenY + tileY; // タイルのY座標を計算
+    int originY = wrappingSub(scanline, this.wy); // スクロールY座標を考慮
 
-    //       if (y < this.scy) {
-    //         y += BACKGROUND_SIZE-1; // スクロールY座標より上のタイルは無視
-    //       }
-    //       if (x < this.scx) {
-    //         x += BACKGROUND_SIZE-1; // スクロールX座標より左のタイルは無視
-    //       }
+    int row = originY / 8; // タイルの行を計算
+    int offset = row * 32; // タイルのオフセットを計算
 
-    //       y -= this.scy; // スクロールY座標を考慮
-    //       x -= this.scx; // スクロールX座標を考慮
+    for (int x = 0; x < SCREEN_WIDTH; x++) {
+      int srcX = x;
+      int srcY = originY;
 
-    //       if (x >= SCREEN_WIDTH || y >= SCREEN_HEIGHT) continue; // 画面外のタイルは無視
+      if (this.wx + x < WINDOW_OFFSET_X || wrappingAdd(this.wx, x) < this.wx) continue;
 
-    //       int[] color = Tile.getColorFromPalette(pixel, this.bgp); // タイルの色を取得
+      int destX = wrappingSub(wrappingAdd(this.wx, x), WINDOW_OFFSET_X);
+      int destY = scanline;
 
-    //       // System.out.print(pixelNum + " ");
-    //       this.frameBuffer[y * SCREEN_WIDTH + x] = color; // ピクセル値をフレームバッファに書き込む
-    //     }
-    //     // System.out.println();
-    //   }
-    //   // System.out.println();
-    // }
-    drawBackground();
+      if (destX >= SCREEN_WIDTH || destY >= SCREEN_HEIGHT) continue; // 画面外のタイルは無視
 
+      int vramIndex = offset + (x / 8); // タイルのインデックスを計算
+      int tileIndex = this.vram[startAddress + vramIndex]; // タイルのインデックスを取得
 
-    // MARK: ウィンドウの描画
-    if (this.controls.windowEnabled && this.wx <= 166 && this.wy <= 143) {
-      int wx = this.wx - WINDOW_OFFSET_X; // ウィンドウのX座標を計算
-      int wy = this.wy - WINDOW_OFFSET_Y; // ウィンドウのY座標を計算
+      if (!this.controls.tiles && tileIndex < 128) {
+        // タイルのインデックスが0x00から0x7Fまでの範囲の場合、タイルのインデックスを-128して取得
+        tileIndex = wrappingAdd(tileIndex, 256); // タイルのインデックスを-128して取得
+      }
 
-      int windowAddressStart = (this.controls.windowTileMap) ? 0x9C00 : 0x9800; // ウィンドウタイルマップのアドレスを決定
-      int windowAddressEnd = (this.controls.windowTileMap) ? 0x9FFF : 0x9BFF; // ウィンドウタイルマップのアドレスを決定
+      Tile tile = this.tiles[tileIndex];
+      TilePixelValue pixel = tile.pixels[srcY % 8][srcX % 8];
+      int[] color = Tile.getColorFromPalette(pixel, this.bgp);
+      this.frameBuffer[destY * SCREEN_WIDTH + destX] = color;
+    }
 
-      // System.out.println(String.format("%04X..%04X", windowAddressStart, windowAddressEnd));
+  }
 
-      for (int addr = windowAddressStart; addr <= windowAddressEnd; addr++) {
-        // System.out.println("addr: " + String.format("0x%04X", addr));
-        int vramAddr = addr - VRAM_BEGIN; // タイルのインデックスが保存されている先頭アドレスをVRAMのアドレスに変換
-        // System.out.println("vramAddr: " + String.format("0x%04X", vramAddr));
-        int index = this.vram[vramAddr];
+  // MARK: drawWindow
+  private void drawWindow() {
+    if (!(this.controls.windowEnabled && this.wx <= 166 && this.wy <= 143)) return; // ウィンドウが無効な場合は何もしない
 
-        if (!this.controls.tiles && index < 128) {
-          // タイルのインデックスが0x00から0x7Fまでの範囲の場合、タイルのインデックスを-128して取得
-          index = wrappingAdd(index, 256); // タイルのインデックスを-128して取得
-        }
+    int wx = this.wx - WINDOW_OFFSET_X; // ウィンドウのX座標を計算
+    int wy = this.wy - WINDOW_OFFSET_Y; // ウィンドウのY座標を計算
 
-        // System.out.println("index: " + String.format("0x%04X", index));
-        Tile tile = this.tiles[index]; // タイルを取得
-        // System.out.println("tile: " + tile);
+    int windowAddressStart = (this.controls.windowTileMap) ? 0x9C00 : 0x9800; // ウィンドウタイルマップのアドレスを決定
+    int windowAddressEnd = (this.controls.windowTileMap) ? 0x9FFF : 0x9BFF; // ウィンドウタイルマップのアドレスを決定
 
-        int i = addr - windowAddressStart; // タイルのインデックスを計算
-        int screenX = ((i) % 32) * Tile.TILE_LENGTH; // タイルのX座標の始点を計算
-        int screenY = ((i) / 32) * Tile.TILE_LENGTH; // タイルのY座標の始点を計算
-        // System.out.println("sx: " + screenX + ", sy: " + screenY);
+    // System.out.println(String.format("%04X..%04X", windowAddressStart, windowAddressEnd));
 
-        // System.out.println("Tile print");
+    for (int addr = windowAddressStart; addr <= windowAddressEnd; addr++) {
+      // System.out.println("addr: " + String.format("0x%04X", addr));
+      int vramAddr = addr - VRAM_BEGIN; // タイルのインデックスが保存されている先頭アドレスをVRAMのアドレスに変換
+      // System.out.println("vramAddr: " + String.format("0x%04X", vramAddr));
+      int index = this.vram[vramAddr];
 
-        for (int tileX = 0; tileX < Tile.TILE_LENGTH; tileX++) {
-          for (int tileY = 0; tileY < Tile.TILE_LENGTH; tileY++) {
-            TilePixelValue pixel = tile.pixels[tileY][tileX]; // タイルのピクセル値を取得
-            int x = screenX + tileX; // タイルのX座標を計算
-            int y = screenY + tileY; // タイルのY座標を計算
+      if (!this.controls.tiles && index < 128) {
+        // タイルのインデックスが0x00から0x7Fまでの範囲の場合、タイルのインデックスを-128して取得
+        index = wrappingAdd(index, 256); // タイルのインデックスを-128して取得
+      }
 
-            if (x < wx || y < wy) continue; // ウィンドウのX座標より左のタイルは無視
+      // System.out.println("index: " + String.format("0x%04X", index));
+      Tile tile = this.tiles[index]; // タイルを取得
+      // System.out.println("tile: " + tile);
 
-            y -= wy; // ウィンドウY座標を考慮
-            x -= wx; // ウィンドウX座標を考慮
+      int i = addr - windowAddressStart; // タイルのインデックスを計算
+      int screenX = ((i) % 32) * Tile.TILE_LENGTH; // タイルのX座標の始点を計算
+      int screenY = ((i) / 32) * Tile.TILE_LENGTH; // タイルのY座標の始点を計算
+      // System.out.println("sx: " + screenX + ", sy: " + screenY);
 
-            if (x >= SCREEN_WIDTH || y >= SCREEN_HEIGHT) continue; // 画面外のタイルは無視
+      // System.out.println("Tile print");
 
-            int[] color = Tile.getColorFromPalette(pixel, this.bgp); // タイルの色を取得
+      for (int tileX = 0; tileX < Tile.TILE_LENGTH; tileX++) {
+        for (int tileY = 0; tileY < Tile.TILE_LENGTH; tileY++) {
+          TilePixelValue pixel = tile.pixels[tileY][tileX]; // タイルのピクセル値を取得
+          int x = screenX + tileX; // タイルのX座標を計算
+          int y = screenY + tileY; // タイルのY座標を計算
 
-            // System.out.print(pixelNum + " ");
-            this.frameBuffer[y * SCREEN_WIDTH + x] = color; // ピクセル値をフレームバッファに書き込む
-          }
-          // System.out.println();
+          if (x < wx || y < wy) continue; // ウィンドウのX座標より左のタイルは無視
+
+          y -= wy; // ウィンドウY座標を考慮
+          x -= wx; // ウィンドウX座標を考慮
+
+          if (x >= SCREEN_WIDTH || y >= SCREEN_HEIGHT) continue; // 画面外のタイルは無視
+
+          int[] color = Tile.getColorFromPalette(pixel, this.bgp); // タイルの色を取得
+
+          // System.out.print(pixelNum + " ");
+          this.frameBuffer[y * SCREEN_WIDTH + x] = color; // ピクセル値をフレームバッファに書き込む
         }
         // System.out.println();
       }
+      // System.out.println();
     }
+  }
 
-    // MARK: スプライトの描画
+  private void drawSpritesLine(int scanline) {
+
+  }
+
+  // MARK: drawSprites
+  private void drawSprites() {
     if (!this.controls.objEnabled) return; // スプライトが無効な場合は何もしない
     for (int i = 0; i < this.sprites.length; i++) {
       int spriteX = this.sprites[i].x; // スプライトのX座標を計算
@@ -304,6 +348,14 @@ public class PPU {
         }
       }
     }
+  }
+
+  // MARK: drawFrame
+  private void drawFrame() {
+    drawBackground(); // 背景の描画
+
+    drawWindow(); // ウィンドウの描画
+
   }
 
   public int[][] getFrames() {
@@ -410,6 +462,9 @@ public class PPU {
         this.status.PPUMode = 3; // VRAM読み込みモード
       } else {
         mode = 0; // HBlankモード
+        if (this.status.PPUMode != 0) {
+          drawScanline(currentLine); // スキャンラインを描画
+        }
         this.status.PPUMode = 0; // HBlankモード
         reqInt = this.status.mode0IntSelect; // HBlankモードの割り込み要求
       }
