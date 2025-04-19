@@ -711,10 +711,10 @@ public class CPU {
 
     switch (interrupt) {
       case VBLANK:
-        requestInterrupt(0x01); // V-Blank割り込み要求（ビット0）
+        requestInterrupt(0x00); // V-Blank割り込み要求（ビット0）
         break;
       case LCD:
-        requestInterrupt(0x02); // LCD [LYC=LY割り込み要求]（ビット1）
+        requestInterrupt(0x01); // LCD [LYC=LY割り込み要求]（ビット1）
         break;
       default:
         break;
