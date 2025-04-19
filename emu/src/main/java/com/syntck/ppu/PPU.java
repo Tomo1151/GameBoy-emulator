@@ -322,6 +322,7 @@ public class PPU {
   private void drawSpritesLine(int scanline) {
     if (!this.controls.objEnabled) return; // スプライトが無効な場合は何もしない
 
+    int count = 0;
     for (int i = 0; i < this.sprites.length; i++) {
       int spriteX = this.sprites[i].x; // スプライトのX座標を計算
       int spriteY = this.sprites[i].y; // スプライトのY座標を計算
@@ -381,6 +382,11 @@ public class PPU {
         }
 
         this.frameBuffer[y * SCREEN_WIDTH + x] = color;
+      }
+      count++;
+      if (count >= 10) {
+        // スプライトの数が10を超えた場合は無視
+        return;
       }
     }
   }

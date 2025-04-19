@@ -195,7 +195,7 @@ class GameBoyPanel extends JPanel {
     // setSize(new java.awt.Dimension(SCREEN_WIDTH * FRAME_SCALE, SCREEN_HEIGHT * FRAME_SCALE));
     
     // Swingのダブルバッファリングを有効化
-    // setDoubleBuffered(true);
+    setDoubleBuffered(true);
     
     // バッファ画像を1回だけ作成
     frameBuffer = new BufferedImage(
