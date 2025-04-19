@@ -2,7 +2,6 @@ package com.syntck;
 
 import java.awt.Color;
 import java.awt.Graphics;
-import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
 import javax.swing.JFrame;
@@ -13,7 +12,6 @@ import com.syntck.cartridge.Cartridge;
 
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
-import java.util.concurrent.TimeUnit;
 
 import com.syntck.cpu.CPU;
 import com.syntck.joypad.Joypad;
@@ -185,6 +183,13 @@ class GameBoyPanel extends JPanel {
   public static final int SCREEN_WIDTH = 160;
   public static final int SCREEN_HEIGHT = 144;
   public static final int FRAME_SCALE = 3;
+
+  public static final Color[] COLORS = {
+    new Color(232, 252, 204), // 0x00: 黒
+    new Color(172, 212, 144), // 0x01: ダークグレー
+    new Color(84, 140, 112), // 0x02: ライトグレー
+    new Color(20, 44, 56), // 0x03: 白
+  };
   
   // 描画用バッファ
   private final BufferedImage frameBuffer;
@@ -207,7 +212,7 @@ class GameBoyPanel extends JPanel {
   // フレームバッファを更新するメソッド（GameBoyクラスから呼ばれる）
   public void updateFrame() {
     // GPUから最新のフレームデータを取得
-    int[][] frame = gpu.getFrames();
+    int[] frame = gpu.getFrame();
     
     // バッファの画像データを直接操作
     int[] pixels = ((DataBufferInt) frameBuffer.getRaster().getDataBuffer()).getData();
@@ -215,8 +220,9 @@ class GameBoyPanel extends JPanel {
     // フレームバッファを効率的に更新
     for (int y = 0; y < SCREEN_HEIGHT; y++) {
       for (int x = 0; x < SCREEN_WIDTH; x++) {
-        int[] rgb = frame[y * SCREEN_WIDTH + x];
-        pixels[y * SCREEN_WIDTH + x] = (rgb[0] << 16) | (rgb[1] << 8) | rgb[2];
+        int colorIndex = frame[y * SCREEN_WIDTH + x]; // 0x00, 0x01, 0x02, 0x03
+        Color color = COLORS[colorIndex]; // 色を取得
+        pixels[y * SCREEN_WIDTH + x] = color.getRGB(); // ピクセルデータを更新
       }
     }
     
