@@ -331,6 +331,7 @@ public class PPU {
     if (!this.controls.objEnabled) return; // スプライトが無効な場合は何もしない
 
     int ySize = this.controls.objSize ? 16 : 8; // スプライトのサイズを取得
+    int count = 0;
 
     for (Sprite sprite : this.sprites) {
       int spriteX = sprite.x; // スプライトのX座標を計算
@@ -390,6 +391,8 @@ public class PPU {
 
         this.frameBuffer[y * SCREEN_WIDTH + x] = color;
       }
+      count++;
+      if (count >= 10) return;
     }
   }
 
@@ -417,7 +420,7 @@ public class PPU {
 
           if (pixel == TilePixelValue.Zero) continue;
 
-          int color = Tile.getColorFromPalette(pixel, (palette == 0) ? this.obp0 : this.obp1);
+          int color = Tile.getColorFromPalette(pixel, ((palette & 0xFF) == 0) ? this.obp0 : this.obp1);
 
           // 画面上の表示位置は元の座標を使用
           int x = spriteX + tileX - SPRITE_OFFSET_X;
