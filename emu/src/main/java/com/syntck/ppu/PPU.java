@@ -1,5 +1,8 @@
 package com.syntck.ppu;
 
+import java.util.Comparator;
+import java.util.ArrayList;
+
 import static com.syntck.Functions.wrappingAdd;
 import static com.syntck.Functions.wrappingSub;
 
@@ -35,7 +38,8 @@ public class PPU {
 
   public int[] vram = new int[VRAM_SIZE];
   public Tile[] tiles = new Tile[384];
-  public Sprite[] sprites = new Sprite[40]; // スプライトの数は40個
+  // public Sprite[] sprites = new Sprite[40]; // スプライトの数は40個
+  public ArrayList<Sprite> sprites = new ArrayList<Sprite>(40);
 
   private int[] frameBuffer = new int[SCREEN_WIDTH * SCREEN_HEIGHT];
   private int scanlineCounter;
@@ -76,8 +80,8 @@ public class PPU {
     for (int i = 0; i < this.oam.length; i++) {
       this.oam[i] = 0; // Initialize OAM with 0
     }
-    for (int i = 0; i < this.sprites.length; i++) {
-      this.sprites[i] = new Sprite(0, 0, 0, 0, 0); // Initialize sprites with default values
+    for (int i = 0; i < 40; i++) {
+      this.sprites.add(new Sprite(0, 0, 0, 0, 0)); // Initialize sprites with default values
     }
     for (int i = 0; i < this.lineIndexes.length; i++) {
       this.lineIndexes[i] = TilePixelValue.Zero; // Initialize lineIndexes with Zero
@@ -333,6 +337,8 @@ public class PPU {
     int ySize = this.controls.objSize ? 16 : 8; // スプライトのサイズを取得
     int count = 0;
 
+    this.sprites.sort(new SpriteComparator());
+
     for (Sprite sprite : this.sprites) {
       int spriteX = sprite.x; // スプライトのX座標を計算
       int spriteY = sprite.y; // スプライトのY座標を計算
@@ -399,11 +405,11 @@ public class PPU {
   // MARK: drawSprites
   private void drawSprites() {
     if (!this.controls.objEnabled) return; // スプライトが無効な場合は何もしない
-    for (int i = 0; i < this.sprites.length; i++) {
-      int spriteX = this.sprites[i].x; // スプライトのX座標を計算
-      int spriteY = this.sprites[i].y; // スプライトのY座標を計算
-      Tile tile = this.tiles[this.sprites[i].tileIndex]; // スプライトのタイルを取得
-      int attributes = this.sprites[i].attributes; // スプライトの属性を取得
+    for (int i = 0; i < this.sprites.size(); i++) {
+      int spriteX = this.sprites.get(i).x; // スプライトのX座標を計算
+      int spriteY = this.sprites.get(i).y; // スプライトのY座標を計算
+      Tile tile = this.tiles[this.sprites.get(i).tileIndex]; // スプライトのタイルを取得
+      int attributes = this.sprites.get(i).attributes; // スプライトの属性を取得
       boolean priority = (attributes & 0x80) != 0; // スプライトの優先度を取得
       boolean yFlip = (attributes & 0x40) != 0; // Y軸反転フラグ
       boolean xFlip = (attributes & 0x20) != 0; // X軸反転フラグ
@@ -452,18 +458,20 @@ public class PPU {
 
   public void writeOAM(int address, int value) {
     this.oam[address - 0xFE00] = value; // OAMに書き込む
-    for (int i = 0; i < this.sprites.length; i++) {
+    for (int i = 0; i < this.sprites.size(); i++) {
       int index = i * 4; // スプライトのインデックスを計算
       int y = this.oam[index];
       int x = this.oam[index + 1];
       int tileIndex = this.oam[index + 2];
       int attributes = this.oam[index + 3];
 
-      this.sprites[i].index = i; // スプライトのインデックスを設定
-      this.sprites[i].y = y; // スプライトのY座標を設定
-      this.sprites[i].x = x; // スプライトのX座標を設定
-      this.sprites[i].tileIndex = tileIndex;
-      this.sprites[i].attributes = attributes;
+      // Sprite sprite = new Sprite(y, x, tileIndex, attributes, tileIndex);
+      // this.sprites.set(i, sprite);
+      this.sprites.get(i).index = i; // スプライトのインデックスを設定
+      this.sprites.get(i).y = y; // スプライトのY座標を設定
+      this.sprites.get(i).x = x; // スプライトのX座標を設定
+      this.sprites.get(i).tileIndex = tileIndex;
+      this.sprites.get(i).attributes = attributes;
     }
   }
 
@@ -639,6 +647,18 @@ class Sprite {
     this.attributes = attributes;
     this.index = index;
   }
+}
+
+class SpriteComparator implements Comparator<Sprite> {
+
+	@Override
+	public int compare(Sprite sp1, Sprite sp2) {
+		if (sp1.x == sp2.x) {
+      return sp1.index < sp2.index ? 1 : -1;
+    } else {
+      return sp1.x < sp2.x ? 1 : -1;
+    }
+	}
 }
 
 enum TilePixelValue {
