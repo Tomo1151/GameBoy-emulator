@@ -35,7 +35,7 @@ public class GameBoy {
   public void run() {
     // 最後のフレーム更新時間
     long lastFrameTime = System.nanoTime();
-    final long frameTimeNanos = 1_000_000_000 / 60; // 60FPS
+    final long frameTimeNanos = 1_000_000_0 / 60; // 60FPS
     
     while (true) {
       // CPU実行
@@ -53,13 +53,13 @@ public class GameBoy {
         long currentTime = System.nanoTime();
         long elapsedTime = currentTime - lastFrameTime;
         
-        // if (elapsedTime < frameTimeNanos) {
-        //   try {
-        //       TimeUnit.NANOSECONDS.sleep(frameTimeNanos - elapsedTime);
-        //     } catch (InterruptedException e) {
-        //     Thread.currentThread().interrupt();
-        //   }
-        // }
+        if (elapsedTime < frameTimeNanos) {
+          try {
+              TimeUnit.NANOSECONDS.sleep(frameTimeNanos - elapsedTime);
+            } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+          }
+        }
         
         lastFrameTime = System.nanoTime();
       }

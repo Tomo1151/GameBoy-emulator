@@ -17,6 +17,7 @@ public class CPU {
   public int timerCounter; // タイマーカウンタ
   private int divCounter; // DIVカウンタ
   public boolean interruptMasterEnable; // 割り込み許可フラグ
+  private int eiCount;
   private boolean halted; // HALTフラグ
   public boolean debug = false;
 
@@ -30,6 +31,7 @@ public class CPU {
     this.sp = 0xFFFF; // スタックポインタの初期値
     this.clockSelect = 0; // クロック選択の初期値
     this.interruptMasterEnable = true;
+    this.eiCount = 0;
     this.halted = false;
   }
 
@@ -42,6 +44,7 @@ public class CPU {
     this.divCounter = 0;
     this.clockSelect = 0; // クロック選択の初期値
     this.interruptMasterEnable = true;
+    this.eiCount = 0;
     this.halted = false;
 
     this.bus.writeByte(0xFF50, 1);
@@ -601,7 +604,8 @@ public class CPU {
 
       case RETI: {
         // RETI命令は、割り込みを有効にしてからリターンする命令
-        this.interruptMasterEnable = true; // 割り込みを有効にする
+        // this.interruptMasterEnable = true; // 割り込みを有効にする
+        this.eiCount = 1;
         int pc = return_(true); // 条件に関係なくリターンする
         this.pc = wrappingSub16(pc, 1); // 共通処理としてRET命令のバイト数分進められるため，それを考慮して引く
         return true;
@@ -643,7 +647,7 @@ public class CPU {
 
       case EI: {
         // 割り込みを有効にする命令
-        this.interruptMasterEnable = true;
+        this.eiCount = 1;
         return true;
       }
 
@@ -654,9 +658,15 @@ public class CPU {
 
   // MARK: *** step ***
   public void step() {
+    if (this.eiCount > 0) {
+      this.eiCount--;
+
+      if (this.eiCount == 0) this.interruptMasterEnable = true;
+    }
+
     // if (this.halted) {
-    //   updateTimers(1);
-    //   updateGraphics(1);
+    //   updateTimers(4);
+    //   updateGraphics(4);
     //   handleInterrupts();
     //   return;
     // }
@@ -672,10 +682,11 @@ public class CPU {
       instructionByte = this.bus.readByte(this.pc + 1);
     }
 
+    // if (this.pc == 0xC2B5) this.debug = true;
     
     // 命令をデコード
     Instruction instruction = Instruction.fromByte(instructionByte, isPrefixed);
-    if (this.debug) System.out.println(String.format("$%04X: ", this.pc) + " OP: " + (isPrefixed ? "0xCB" : "0x") + String.format("%02X", instructionByte) + "(" + instruction.getType() + ") " + (instruction.operand0) + " " + (instruction.operand1));
+    if (this.debug) System.out.println(String.format("$%04X: ", this.pc) + " OP: " + (isPrefixed ? "0xCB" : "0x") + String.format("%02X", instructionByte) + "(" + instruction.getType() + ") " + (instruction.operand0) + " " + (instruction.operand1) + " IME: " + this.interruptMasterEnable);
     if (this.debug) this.registers.f.dump();
     if (this.debug) System.out.println(String.format("af= %04X, bc= %04X, de= %04X, hl= %04X, sp= $%04X: %04X, pc= %04X", this.registers.get_af(), this.registers.get_bc(), this.registers.get_de(), this.registers.get_hl(), this.sp, this.bus.readWord(this.sp), this.pc));
     if (this.debug) System.out.println();
@@ -711,10 +722,10 @@ public class CPU {
 
     switch (interrupt) {
       case VBLANK:
-        requestInterrupt(0x00); // V-Blank割り込み要求（ビット0）
+        requestInterrupt(0x01); // V-Blank割り込み要求（ビット0）
         break;
       case LCD:
-        requestInterrupt(0x01); // LCD [LYC=LY割り込み要求]（ビット1）
+        requestInterrupt(0x02); // LCD [LYC=LY割り込み要求]（ビット1）
         break;
       default:
         break;
@@ -731,6 +742,7 @@ public class CPU {
   private void requestInterrupt(int id) {
     int req = this.bus.readByte(0xFF0F);
     req |= id; // 割り込み要求をセット
+    // if (req != 1) System.out.println("* Interrupt requested: " + req + " pc: " + String.format("$%04X", this.pc));
     this.bus.writeByte(0xFF0F, req); // 割り込み要求を更新
   }
 
@@ -751,55 +763,107 @@ public class CPU {
     handleDivRegister(cycles);
 
     int tac = this.bus.readByte(0xFF07); // Timer Control
-    if ((tac & 0x04) == 0) return; // タイマー停止時は処理しない
-
+    
     int clockSelect = tac & 0x03;
     int clockDivider;
-
+    
     // 正確なタイマーの速度設定
     switch (clockSelect) {
       case 0x00:
-        clockDivider = CPU_CLOCK / 4096; // 4096Hz
-        break;
+      clockDivider = CPU_CLOCK / 4096; // 4096Hz
+      break;
       case 0x01:
-        clockDivider = CPU_CLOCK / 262144; // 262144Hz
-        break;
+      clockDivider = CPU_CLOCK / 262144; // 262144Hz
+      break;
       case 0x02:
-        clockDivider = CPU_CLOCK / 65536; // 65536Hz
-        break;
+      clockDivider = CPU_CLOCK / 65536; // 65536Hz
+      break;
       case 0x03:
-        clockDivider = CPU_CLOCK / 16384; // 16384Hz
-        break;
+      clockDivider = CPU_CLOCK / 16384; // 16384Hz
+      break;
       default:
-        throw new IllegalArgumentException("Invalid clock select: " + clockSelect);
+      throw new IllegalArgumentException("Invalid clock select: " + clockSelect);
     }
-
+    
     // タイマーコントロール
     if (this.clockSelect != clockSelect) {
       this.timerCounter = 0;
       this.clockSelect = clockSelect;
     }
     
+    if ((tac & 0x04) == 0) return; // タイマー停止時は処理しない
 
     this.timerCounter += cycles;
 
-    while (this.timerCounter >= clockDivider) {
-        this.timerCounter -= clockDivider;
-        int tima = this.bus.readByte(0xFF05);
+    if (this.timerCounter < clockDivider) return;
+    this.timerCounter -= clockDivider;
 
-        // TIMAをインクリメント
-        tima = (tima + 1) & 0xFF;
+    int tima = this.bus.readByte(0xFF05);
+    if (tima == 255) {
+      int tma = this.bus.readByte(0xFF06);
+      this.bus.writeByte(0xFF05, tma);
+      requestInterrupt(0x04); // タイマー割り込み
+    } else {
+      this.bus.writeByte(0xFF05, (tima + 1) & 0xFF);
+    }
 
-        if (tima == 0) {
-            // オーバーフロー発生
-            int tma = this.bus.readByte(0xFF06); // リロード値
-            this.bus.writeByte(0xFF05, tma);     // TIMAをリセット
+    // let tima = self.bus.read_byte(0xFF05);
+    // if tima == 255 {
+    //     let tma = self.bus.read_byte(0xFF06);
+    //     self.bus.write_byte(0xFF05, tma);
+    //     self.request_interrupt(2);
+    // } else {
+    //     self.bus.write_byte(0xFF05, tima + 1);
+    // }
 
-            // タイマー割り込み要求（ビット2）
-            requestInterrupt(0x04);
-        } else {
-            this.bus.writeByte(0xFF05, tima);
-        }
+
+    // while (this.timerCounter >= clockDivider) {
+    //     this.timerCounter -= clockDivider;
+    //     int tima = this.bus.readByte(0xFF05);
+
+    //     // TIMAをインクリメント
+    //     tima = (tima + 1) & 0xFF;
+
+    //     if (tima == 0) {
+    //         // オーバーフロー発生
+    //         int tma = this.bus.readByte(0xFF06); // リロード値
+    //         this.bus.writeByte(0xFF05, tma);     // TIMAをリセット
+
+    //         // タイマー割り込み要求（ビット2）
+    //         requestInterrupt(0x04);
+    //     } else {
+    //         this.bus.writeByte(0xFF05, tima);
+    //     }
+    // }
+  }
+
+  private void serviceInterrupt(int interrupt) {
+    this.interruptMasterEnable = false;
+    this.eiCount = 0;
+    int request = this.bus.readByte(0xFF0F);
+    int mask = ( 0x01 << interrupt);
+    this.bus.writeByte(0xFF0F, request & ~mask);
+
+    push(this.pc);
+
+    switch (interrupt) {
+      case 0:
+        this.pc = 0x0040;
+        return;
+      case 1:
+        this.pc = 0x0048;
+        return;
+      case 2:
+        this.pc = 0x0050;
+        return;
+      case 3:
+        this.pc = 0x0058;
+        return;
+      case 4:
+        this.pc = 0x0060;
+        return;
+      default:
+        throw new IllegalArgumentException("unknow interrupt");
     }
   }
 
@@ -818,27 +882,12 @@ public class CPU {
 
     // 割り込み処理
     for (int i = 0; i < 5; i++) {
-        int interruptBit = (1 << i);
-        
-        if ((request & interruptBit & enabled) != 0) {
-            // 割り込み処理の実行
-            this.interruptMasterEnable = false;
-            this.bus.writeByte(0xFF0F, request & ~interruptBit); // 要求クリア
-            push(this.pc);
-            
-            // 対応するハンドラにジャンプ
-            switch (i) {
-                case 0: this.pc = 0x0040; break; // VBlank
-                case 1: this.pc = 0x0048; break; // LCD STAT
-                case 2: this.pc = 0x0050; break; // Timer
-                case 3: this.pc = 0x0058; break; // Serial
-                case 4: this.pc = 0x0060; break; // Joypad
-            }
+      int interruptBit = (0x01 << i);
 
-            updateTimers(5);
-            updateGraphics(5);
-            return; // 優先度の高い割り込みを1つだけ処理
-        }
+      if ((request & interruptBit) != 0 && (enabled & interruptBit) != 0) {
+        serviceInterrupt(i);
+        break;
+      }
     }
   }
 

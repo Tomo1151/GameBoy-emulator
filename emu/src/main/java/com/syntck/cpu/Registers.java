@@ -11,7 +11,7 @@ public class Registers {
   public int l;
 
   public Registers() {
-    this.a = 0x11; // Aレジスタの初期値
+    this.a = 0x01; // Aレジスタの初期値
     this.b = 0x00; // Bレジスタの初期値
     this.c = 0x00; // Cレジスタの初期値
     this.d = 0xFF; // Dレジスタの初期値
