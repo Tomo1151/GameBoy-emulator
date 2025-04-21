@@ -35,7 +35,7 @@ public class GameBoy {
   public void run() {
     // 最後のフレーム更新時間
     long lastFrameTime = System.nanoTime();
-    final long frameTimeNanos = 1_000_000_0 / 60; // 60FPS
+    final long frameTimeNanos = 1_000_000_00 / 60; // 60FPS
     
     while (true) {
       // CPU実行
@@ -100,27 +100,27 @@ class GameBoyFrame extends JFrame implements KeyListener {
         System.exit(0); // ESCキーで終了
         break;
       }
-      case KeyEvent.VK_UP: {
+      case KeyEvent.VK_W: {
         joypad.buttonUp = true; // 上ボタンを押す
         break;
       }
-      case KeyEvent.VK_DOWN: {
+      case KeyEvent.VK_S: {
         joypad.buttonDown = true; // 下ボタンを押す
         break;
       }
-      case KeyEvent.VK_LEFT: {
+      case KeyEvent.VK_A: {
         joypad.buttonLeft = true; // 左ボタンを押す
         break;
       }
-      case KeyEvent.VK_RIGHT: {
+      case KeyEvent.VK_D: {
         joypad.buttonRight = true; // 右ボタンを押す
         break;
       }
-      case KeyEvent.VK_A: {
+      case KeyEvent.VK_J: {
         joypad.buttonA = true; // Aボタンを押す
         break;
       }
-      case KeyEvent.VK_B: {
+      case KeyEvent.VK_K: {
         joypad.buttonB = true; // Bボタンを押す
         break;
       }
@@ -144,27 +144,27 @@ class GameBoyFrame extends JFrame implements KeyListener {
         System.exit(0); // ESCキーで終了
         break;
       }
-      case KeyEvent.VK_UP: {
+      case KeyEvent.VK_W: {
         joypad.buttonUp = false; // 上ボタンを押す
         break;
       }
-      case KeyEvent.VK_DOWN: {
+      case KeyEvent.VK_S: {
         joypad.buttonDown = false; // 下ボタンを押す
         break;
       }
-      case KeyEvent.VK_LEFT: {
+      case KeyEvent.VK_A: {
         joypad.buttonLeft = false; // 左ボタンを押す
         break;
       }
-      case KeyEvent.VK_RIGHT: {
+      case KeyEvent.VK_D: {
         joypad.buttonRight = false; // 右ボタンを押す
         break;
       }
-      case KeyEvent.VK_A: {
+      case KeyEvent.VK_J: {
         joypad.buttonA = false; // Aボタンを押す
         break;
       }
-      case KeyEvent.VK_B: {
+      case KeyEvent.VK_K: {
         joypad.buttonB = false; // Bボタンを押す
         break;
       }
