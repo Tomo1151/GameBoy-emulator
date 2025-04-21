@@ -105,12 +105,8 @@ public class PPU {
         // VBlank開始
         // VBlankフラグをセット
         // this.drawFrame();
-        return PPUInterrupt.VBLANK; // VBlank割り込みを返す
-      } else if (currentLine < 144) {
-        // 画面描画中
-        // this.drawScanline(currentLine-1);
         this.frameUpdated = true; // フレームが更新されたことを示すフラグをセット
-        return PPUInterrupt.LCD; // LCD割り込みを返す
+        return PPUInterrupt.VBLANK; // VBlank割り込みを返す
       } else if (currentLine > 153) {
         // 1フレーム描画完了
         this.ly = 0; // LYをリセット
@@ -538,7 +534,7 @@ public class PPU {
       reqInt = this.status.mode1IntSelect; // VBlankモードの割り込み要求
     } else {
       int mode2Bounds = 80; // モード2の時間 (80クロックサイクル)
-      int mode3Bounds = 80 + 172; // モード3の時間 (172クロックサイクル)
+      int mode3Bounds = 80 + 289; // モード3の時間 (172クロックサイクル)
 
       if (this.scanlineCounter < mode2Bounds) {
         mode = 2; // OAM読み込みモード
