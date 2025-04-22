@@ -34,34 +34,26 @@ public class GameBoy {
 
   public void run() {
     // 最後のフレーム更新時間
-    long lastFrameTime = System.nanoTime();
-    final long frameTimeNanos = 1_000_000_00 / 60; // 60FPS
-    
+    final long frameTimeNanos = 1_000_000_000 / 60; // 60FPS
+
     while (true) {
+      long frameStartTime = System.nanoTime();
+
       // CPU実行
       for (int i = 0; i < 70000 / 60; i++) { // 約1フレーム分のCPUサイクル
         this.cpu.step();
       }
-      
+
       // フレーム更新条件
       if (this.cpu.bus.gpu.frameUpdated) {
         // フレームバッファを更新
         this.gameBoyFrame.panel.updateFrame();
         this.cpu.bus.gpu.frameUpdated = false;
-        
+
+
         // フレームレート制御
-        long currentTime = System.nanoTime();
-        long elapsedTime = currentTime - lastFrameTime;
-        
-        if (elapsedTime < frameTimeNanos) {
-          try {
-              TimeUnit.NANOSECONDS.sleep(frameTimeNanos - elapsedTime);
-            } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-          }
-        }
-        
-        lastFrameTime = System.nanoTime();
+        do {
+        } while (System.nanoTime() - frameStartTime < frameTimeNanos);
       }
     }
   }
@@ -86,6 +78,7 @@ class GameBoyFrame extends JFrame implements KeyListener {
     setTitle("Game Boy Emulator");
     panel.setPreferredSize(new java.awt.Dimension(SCREEN_WIDTH * FRAME_SCALE, SCREEN_HEIGHT * FRAME_SCALE));
     pack(); // Pack the frame to fit the preferred size
+    setLocationRelativeTo(null);
     setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     addKeyListener(this);  // Added key listener to enable key events.
     setVisible(true);
@@ -116,11 +109,11 @@ class GameBoyFrame extends JFrame implements KeyListener {
         joypad.buttonRight = true; // 右ボタンを押す
         break;
       }
-      case KeyEvent.VK_J: {
+      case KeyEvent.VK_K: {
         joypad.buttonA = true; // Aボタンを押す
         break;
       }
-      case KeyEvent.VK_K: {
+      case KeyEvent.VK_J: {
         joypad.buttonB = true; // Bボタンを押す
         break;
       }
@@ -160,11 +153,11 @@ class GameBoyFrame extends JFrame implements KeyListener {
         joypad.buttonRight = false; // 右ボタンを押す
         break;
       }
-      case KeyEvent.VK_J: {
+      case KeyEvent.VK_K: {
         joypad.buttonA = false; // Aボタンを押す
         break;
       }
-      case KeyEvent.VK_K: {
+      case KeyEvent.VK_J: {
         joypad.buttonB = false; // Bボタンを押す
         break;
       }
